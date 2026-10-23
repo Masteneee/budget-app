@@ -75,6 +75,23 @@ function formatShortDate(dateString) {
   return MONTH_NAMES[month - 1] + " " + day;
 }
 
+const FULL_MONTH_NAMES = ["January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"];
+
+// "2026-10" -> "October 2026"
+function formatMonthLabel(month) {
+  return FULL_MONTH_NAMES[Number(month.slice(5, 7)) - 1] + " " + month.slice(0, 4);
+}
+
+// shiftMonth("2026-01", -1) -> "2025-12". Counting months from year 0
+// turns "previous month" into simple subtraction, even across years.
+function shiftMonth(month, change) {
+  const totalMonths = Number(month.slice(0, 4)) * 12 + Number(month.slice(5, 7)) - 1 + change;
+  const year = Math.floor(totalMonths / 12);
+  const monthNumber = (totalMonths % 12) + 1;
+  return year + "-" + String(monthNumber).padStart(2, "0");
+}
+
 // Returns a new array where the entry with this id has the changes
 // applied. We never modify the old array, which keeps bugs local.
 function updateEntry(entries, id, changes) {
@@ -116,6 +133,45 @@ function totalsByCategory(entries) {
   return list.sort((a, b) => b.cents - a.cents || a.category.localeCompare(b.category));
 }
 
+// Per category: this month's spending, last month's, and the change.
+// Includes categories that only appear in one of the two months.
+function compareMonths(currentEntries, previousEntries) {
+  const current = totalsByCategory(currentEntries);
+  const previous = totalsByCategory(previousEntries);
+  const comparison = [];
+  for (const total of current) {
+    const before = previous.find((p) => p.category === total.category);
+    const previousCents = before ? before.cents : 0;
+    comparison.push({
+      category: total.category,
+      currentCents: total.cents,
+      previousCents: previousCents,
+      changeCents: total.cents - previousCents,
+    });
+  }
+  // Categories spent on last month but not this month go at the end
+  for (const total of previous) {
+    if (!current.some((c) => c.category === total.category)) {
+      comparison.push({
+        category: total.category,
+        currentCents: 0,
+        previousCents: total.cents,
+        changeCents: -total.cents,
+      });
+    }
+  }
+  return comparison;
+}
+
+// "Food: $40.00 less than last month". Plain facts, no judgement words.
+function describeChange(row) {
+  if (row.changeCents === 0) {
+    return row.category + ": same as last month";
+  }
+  const direction = row.changeCents < 0 ? "less" : "more";
+  return row.category + ": " + formatCents(Math.abs(row.changeCents)) + " " + direction + " than last month";
+}
+
 // In the browser, functions above are already global. Node has no
 // globals between files, so tests.js needs them handed over here.
 // `module` only exists in Node, which is why we check first.
@@ -135,5 +191,9 @@ if (typeof module !== "undefined") {
     removeEntry,
     monthTotals,
     totalsByCategory,
+    formatMonthLabel,
+    shiftMonth,
+    compareMonths,
+    describeChange,
   };
 }

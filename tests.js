@@ -94,4 +94,35 @@ assert.deepStrictEqual(
   ]
 );
 
+// formatMonthLabel and shiftMonth
+assert.strictEqual(logic.formatMonthLabel("2026-10"), "October 2026");
+assert.strictEqual(logic.shiftMonth("2026-10", -1), "2026-09");
+assert.strictEqual(logic.shiftMonth("2026-01", -1), "2025-12");
+assert.strictEqual(logic.shiftMonth("2025-12", 1), "2026-01");
+assert.strictEqual(logic.shiftMonth("2026-03", -15), "2024-12");
+
+// compareMonths
+const october = [
+  { type: "expense", category: "Food", amountCents: 6000 },
+  { type: "expense", category: "Fun", amountCents: 2000 },
+];
+const september = [
+  { type: "expense", category: "Food", amountCents: 10000 },
+  { type: "expense", category: "Bills", amountCents: 3000 },
+  { type: "expense", category: "Fun", amountCents: 2000 },
+];
+assert.deepStrictEqual(logic.compareMonths(october, september), [
+  { category: "Food", currentCents: 6000, previousCents: 10000, changeCents: -4000 },
+  { category: "Fun", currentCents: 2000, previousCents: 2000, changeCents: 0 },
+  { category: "Bills", currentCents: 0, previousCents: 3000, changeCents: -3000 },
+]);
+assert.deepStrictEqual(logic.compareMonths([], []), []);
+// A brand new category counts as "more than last month"
+assert.strictEqual(logic.compareMonths(october, [])[0].changeCents, 6000);
+
+// describeChange
+assert.strictEqual(logic.describeChange({ category: "Food", changeCents: -4000 }), "Food: $40.00 less than last month");
+assert.strictEqual(logic.describeChange({ category: "Fun", changeCents: 550 }), "Fun: $5.50 more than last month");
+assert.strictEqual(logic.describeChange({ category: "Fun", changeCents: 0 }), "Fun: same as last month");
+
 console.log("All tests passed");

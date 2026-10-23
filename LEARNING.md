@@ -37,6 +37,13 @@
 - **Doughnut chart, no built-in legend (task 2.1).** The category list below
   the chart gets a coloured dot per row and acts as the legend, so amounts
   are readable without hovering.
+- **The month switcher can't go past the current month (task 2.2).** Future
+  months would always be empty.
+- **After adding an entry, the view jumps to that entry's month (task 2.2).** So
+  you always see what you just saved, even if you were browsing an old month.
+- **"Compared with last month" lists every category from either month (task 2.2).**
+  A category you skipped this month shows as "$30.00 less", and one that's new
+  shows as "more". The wording is plain facts with no judgement.
 
 ---
 
@@ -769,5 +776,82 @@ function as everywhere else.
 2. Its fingerprint (hash) would no longer match the `integrity` attribute, so the
    browser would refuse to run it. The chart would be missing, just like offline,
    but no unknown code would run on our page.
+
+</details>
+
+---
+
+## Task 2.2: Month switcher (2026-10-23)
+
+### What we built
+
+A bar at the top shows "◀ October 2026 ▶". The arrows move between months, and
+everything below follows: the totals, the chart, the category list and the entry
+list. The ▶ arrow is greyed out on the current month, since the future is always
+empty. Labels adapt too: "Left this month" becomes "Left in September 2026". A new
+card, "Compared with last month", lists each category with a plain sentence like
+"Food: $40.00 less than last month" or "Fun: $2.00 more than last month". If the
+previous month has no spending, it says there's nothing to compare with.
+
+### New concepts
+
+**State drives the page.** `viewMonth` is one variable that says which month
+you're looking at. The arrow buttons only change that variable and call
+`render()`. Every part of the page reads `viewMonth` when drawing. That's why
+adding the switcher was mostly about replacing "this month" with `viewMonth`.
+
+**Month math with a single number.** Months are tricky: before January 2026
+comes December 2025. `shiftMonth` turns "2026-01" into one count of months
+(2026 × 12 + 0), adds or subtracts, then splits it back with division (`/ 12`
+for the year) and remainder (`% 12` for the month). No special case for
+January needed.
+
+**`%` (remainder, "modulo").** `14 % 12` is 2: what's left after removing whole
+12s. It's how clocks wrap around, and here how months wrap from 12 back to 1.
+
+**`find` and `some`.** `array.find(fn)` returns the first item where `fn` is
+true (or `undefined`). `array.some(fn)` returns true if at least one item
+matches. We use them to match a category between two months.
+
+**Comparing "YYYY-MM" text.** `viewMonth >= currentMonth` works on text because
+the format puts the biggest unit first and always has the same length. "2026-09"
+< "2026-10" alphabetically, just like the dates they represent.
+
+**`disabled`.** A disabled button can't be clicked or focused. We style it with
+`opacity: 0.4` so it looks unavailable.
+
+**Ternary in an assignment.** `x = isCurrent ? "Left this month" : "Left in ..."`
+picks one of two texts in one line.
+
+### Key lines of code
+
+```js
+const totalMonths = Number(month.slice(0, 4)) * 12 + Number(month.slice(5, 7)) - 1 + change;
+const year = Math.floor(totalMonths / 12);
+const monthNumber = (totalMonths % 12) + 1;
+```
+The `- 1` converts months 1–12 to 0–11 so the math works, and `+ 1` converts back.
+
+```js
+const direction = row.changeCents < 0 ? "less" : "more";
+return row.category + ": " + formatCents(Math.abs(row.changeCents)) + " " + direction + " than last month";
+```
+The sign of the change decides the word, and the amount is always shown positive.
+
+### Quiz
+
+1. Walk through `shiftMonth("2026-01", -1)` step by step. What's `totalMonths`?
+2. You're viewing August and add an expense dated today (in October). What does
+   the screen show afterwards, and why did we choose that?
+
+**Answers**
+
+<details>
+<summary>Show answers</summary>
+
+1. 2026 × 12 + 1 − 1 − 1 = 24311. Year = floor(24311 / 12) = 2025.
+   Month = 24311 % 12 + 1 = 11 + 1 = 12. Result: "2025-12".
+2. It jumps to October 2026, where the new entry is. Otherwise the expense would
+   be saved but invisible, and you might think it didn't work and add it twice.
 
 </details>

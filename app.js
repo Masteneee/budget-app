@@ -34,6 +34,9 @@ const CATEGORY_COLORS = {
 // Created on the first render, then only its data is updated
 let categoryChart = null;
 
+// The month being viewed, like "2026-10". Starts on the current month.
+let viewMonth = monthKey(toDateString(new Date()));
+
 // Which entry the dialog is editing, or null when it's closed
 let editingId = null;
 // What the add form is logging right now: "expense" or "income"
@@ -61,6 +64,8 @@ function addEntry(category) {
     date: dateInput.value || toDateString(new Date()),
   });
   saveData(data);
+  // Show the month the entry belongs to, so it's visible right away
+  viewMonth = monthKey(data.entries[data.entries.length - 1].date);
   render();
 
   addMessage.textContent = "Saved " + formatCents(amountCents) + " in " + category;
@@ -147,12 +152,44 @@ function renderCategoryTotals(entries) {
   }
 }
 
+function renderComparison(entries) {
+  const previousMonth = shiftMonth(viewMonth, -1);
+  const previousEntries = entriesInMonth(data.entries, previousMonth);
+  const rows = compareMonths(entries, previousEntries);
+  const list = document.getElementById("compare-list");
+  const empty = document.getElementById("compare-empty");
+  list.innerHTML = "";
+
+  if (totalsByCategory(previousEntries).length === 0) {
+    empty.textContent = "No spending logged in " + formatMonthLabel(previousMonth) + " to compare with.";
+    empty.hidden = false;
+    return;
+  }
+  empty.hidden = true;
+  for (const row of rows) {
+    list.appendChild(makeElement("li", "", describeChange(row)));
+  }
+}
+
+function renderMonthSwitcher() {
+  const currentMonth = monthKey(toDateString(new Date()));
+  const isCurrent = viewMonth === currentMonth;
+  document.getElementById("month-label").textContent = formatMonthLabel(viewMonth);
+  // No point browsing into months that haven't happened yet
+  document.getElementById("month-next").disabled = viewMonth >= currentMonth;
+  document.getElementById("left-label").textContent = isCurrent
+    ? "Left this month"
+    : "Left in " + formatMonthLabel(viewMonth);
+  document.getElementById("list-title").textContent = isCurrent ? "This month" : formatMonthLabel(viewMonth);
+}
+
 // Redraws everything that depends on the data. Called after any change.
 function render() {
-  const thisMonth = monthKey(toDateString(new Date()));
-  const entries = entriesInMonth(data.entries, thisMonth);
+  const entries = entriesInMonth(data.entries, viewMonth);
+  renderMonthSwitcher();
   renderTotals(entries);
   renderCategoryTotals(entries);
+  renderComparison(entries);
   renderList(entries);
 }
 
@@ -267,6 +304,15 @@ function setAddType(type) {
   addMessage.textContent = "";
   amountInput.focus();
 }
+
+document.getElementById("month-prev").addEventListener("click", () => {
+  viewMonth = shiftMonth(viewMonth, -1);
+  render();
+});
+document.getElementById("month-next").addEventListener("click", () => {
+  viewMonth = shiftMonth(viewMonth, 1);
+  render();
+});
 
 typeExpenseButton.addEventListener("click", () => setAddType("expense"));
 typeIncomeButton.addEventListener("click", () => setAddType("income"));

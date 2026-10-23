@@ -9,7 +9,7 @@ How to start a session: "Read CLAUDE.md and PLAN.md. Do the next unchecked task 
 
 ## Phase 0: Setup
 
-- [ ] **0.1 Project skeleton.** Create index.html, style.css, app.js, logic.js,
+- [x] **0.1 Project skeleton.** Create index.html, style.css, app.js, logic.js,
   storage.js, tests.js and LEARNING.md. The page shows the app name and an empty
   "This month" section. tests.js runs one trivial test and prints "All tests passed".
   Explain in LEARNING.md what each file is for and how the browser loads them.

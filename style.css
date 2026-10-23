@@ -7,8 +7,18 @@
   --accent: #3a7d6b;
 }
 
+/* Padding and border count inside an element's width, so width: 100%
+   never overflows the screen */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
+  /* Use the phone's full width; never allow sideways scrolling */
+  overflow-x: hidden;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   background: var(--background);
   color: var(--text);
@@ -54,8 +64,10 @@ main section + section {
 input,
 select {
   font: inherit;
+  /* iPhones zoom into any input with text smaller than 16px */
+  font-size: max(16px, 1em);
   width: 100%;
-  box-sizing: border-box;
+  min-height: 48px;
   padding: 10px;
   margin-bottom: 8px;
   border: 1px solid #d6d4cc;
@@ -86,12 +98,24 @@ select {
 
 button {
   font: inherit;
+  /* 48px is the smallest size a thumb can hit reliably */
+  min-height: 48px;
   padding: 12px;
   border: none;
   border-radius: 8px;
   background: var(--accent);
   color: #ffffff;
   cursor: pointer;
+  /* Removes the double-tap-to-zoom delay on buttons */
+  touch-action: manipulation;
+}
+
+/* A clear outline for keyboard users, but not on every finger tap */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .message {
@@ -103,6 +127,10 @@ button {
   list-style: none;
   margin: 0;
   padding: 0;
+}
+
+.entry {
+  min-height: 56px;
 }
 
 .entry-list li {
@@ -270,4 +298,20 @@ button.quiet {
 
 .category-amount {
   font-weight: 600;
+}
+
+/* Very narrow phones (like an iPhone SE in some modes): 2 columns of
+   category buttons so labels like "Transport" don't get squeezed */
+@media (max-width: 340px) {
+  .category-buttons {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  main {
+    padding: 12px;
+  }
+
+  .summary-main .summary-value {
+    font-size: 1.75rem;
+  }
 }

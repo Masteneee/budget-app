@@ -28,6 +28,8 @@
   shows "-$7.50" plainly, with no red, per the "no guilt" rule.
 - **"Where it went" counts expenses only and hides categories with $0 (task 1.5).**
   Ties are sorted alphabetically so rows don't swap places randomly.
+- **Phone layout targets: 48px tap targets, 16px inputs, 2 button columns below
+  340px wide (task 1.6).** 48px follows Google's Material guideline (Apple says 44).
 
 ---
 
@@ -575,5 +577,93 @@ Two sort rules in one line: by amount, and if tied, by name.
    `undefined + amount`, which is `NaN`, and anything plus `NaN` stays `NaN`.
 2. Food. The amounts tie, so `b.cents - a.cents` is 0 and the tie-breaker
    sorts alphabetically, and "Food" comes before "Fun" ("o" < "u").
+
+</details>
+
+---
+
+## Task 1.6: Phone-friendly layout (2026-10-23)
+
+### What we built
+
+The app was already one column, so this task polished how it feels on a phone.
+Every button and input is now at least 48 pixels tall, so it's easy to hit with
+a thumb. Text in inputs is 16px, which stops iPhones from zooming in every time
+you tap a field. Buttons no longer wait for a possible double-tap zoom, so they
+react instantly. On very narrow screens the category buttons switch to 2 columns
+so "Transport" isn't squeezed. Keyboard users get a clear outline on whatever is
+focused. We checked at 320, 390 and 1024 pixels wide: no sideways scrolling anywhere.
+
+### The CSS, explained
+
+**`box-sizing: border-box` on everything.** By default, `width: 100%` plus padding
+plus border makes an element *wider* than its parent, which causes sideways
+scrolling on phones. With `border-box`, the width includes padding and border.
+Almost every modern site starts with this rule. `*` means "every element", and
+`::before`/`::after` cover the invisible extra boxes CSS can add.
+
+**`min-height: 48px`.** A minimum, not a fixed height: a button can grow if its
+text wraps, but never shrinks below a thumb-sized target.
+
+**`font-size: max(16px, 1em)`.** `max()` picks the larger of two values. The input
+is at least 16px, and bigger if the surrounding text is bigger. Safari on iPhone
+zooms the whole page into any input smaller than 16px, which is disorienting.
+
+**`touch-action: manipulation`.** Tells the browser this element doesn't need
+double-tap-to-zoom, so it can fire the tap right away instead of waiting
+~300 milliseconds to see if a second tap comes.
+
+**`:focus-visible`.** A "pseudo-class" that applies only when the browser thinks
+the user needs to see focus (keyboard, mostly), not after every mouse click or
+tap. `outline-offset` leaves a small gap between the element and the outline.
+
+**Media query (`@media (max-width: 340px)`).** The rules inside only apply when
+the screen is 340px wide or less. This is the core tool of "responsive design":
+one stylesheet that adapts to the screen size.
+
+**`max-width: 600px` + `margin: 0 auto` on `main`** (from task 0.1). On a laptop,
+content stays in a readable column centered on the page. On a phone (narrower than
+600px), it just fills the width.
+
+**The viewport meta tag** (from task 0.1) is what makes all of this work: without it,
+the phone pretends to be 980px wide and none of these sizes mean what they say.
+
+### Key lines of code
+
+```css
+@media (max-width: 340px) {
+  .category-buttons {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+```
+`repeat(2, 1fr)` is short for `1fr 1fr`: two equal columns. `fr` means
+"fraction of the free space".
+
+```css
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 3px solid var(--accent);
+}
+```
+A comma between selectors means "apply these rules to all of them".
+
+### Quiz
+
+1. You set an input to `width: 100%; padding: 10px;` without `border-box`. On a
+   phone 390px wide, inside a parent 358px wide, how wide is the input really?
+2. Why `min-height: 48px` instead of `height: 48px` for buttons?
+
+**Answers**
+
+<details>
+<summary>Show answers</summary>
+
+1. 358 + 10 + 10 = 378px, plus the border (1px on each side) = 380px. That's 22px
+   wider than its parent, so it pokes out. With `border-box`, it's exactly 358px.
+2. If the text ever wraps onto two lines (a long label, or big system fonts),
+   a fixed height would cut it off. `min-height` guarantees a minimum and lets
+   the button grow when needed.
 
 </details>

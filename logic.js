@@ -549,6 +549,62 @@ function describeGain(gainCents, gainPercent) {
   return sign + formatCents(gainCents) + " (" + percentSign + gainPercent.toFixed(1) + "%)";
 }
 
+// ---------- Lesson cards ----------
+// Plain language, 80 words max each (tests.js checks), and never a
+// suggestion to buy any specific stock or fund.
+const LESSONS = [
+  {
+    title: "What is a stock?",
+    text: "A stock is a tiny piece of ownership in a company. If the company grows " +
+      "and earns more, people may pay more for its shares, and the price rises. If it " +
+      "struggles, the price can fall, sometimes a lot. Some companies also share profits " +
+      "with owners, called dividends. Prices change every day because buyers and sellers " +
+      "keep changing their minds about what the company is worth.",
+  },
+  {
+    title: "What is an ETF?",
+    text: "An ETF (exchange-traded fund) is a basket of many investments that you buy " +
+      "as one share. A single ETF can hold hundreds or thousands of companies. Many ETFs " +
+      "simply copy an index, like the 500 largest US companies, instead of trying to pick " +
+      "winners. You buy and sell ETF shares the same way as a stock, any time the market is open.",
+  },
+  {
+    title: "Diversification",
+    text: "Diversification means not putting all your eggs in one basket. If you own one " +
+      "company and it fails, you can lose everything you put in. If you own hundreds of " +
+      "companies, one failure barely matters, because the others carry on. It lowers your " +
+      "risk without needing to guess which company will win. A broad index fund is one of " +
+      "the simplest ways to get it.",
+  },
+  {
+    title: "Fees",
+    text: "Fees look small but they add up. A fund charging 1% a year takes $10 of every " +
+      "$1,000, every year, whether it does well or not. On $10,000 growing 6% a year for " +
+      "30 years, paying 1% instead of 0.1% costs you about $12,000. Before buying any fund, " +
+      "check its MER (management expense ratio), and watch for trading commissions too.",
+  },
+  {
+    title: "Risk vs time",
+    text: "Prices go up and down, sometimes 30% or more in a bad year, and nobody can " +
+      "predict the next few months. Over many years, broad markets have historically gone " +
+      "up more than down, so time gives you a chance to recover from drops. That's why money " +
+      "you need soon, like next year's tuition, usually stays in savings. Only long-term money " +
+      "gets invested. Past results never guarantee the future.",
+  },
+  {
+    title: "Why \"get rich quick\" fails",
+    text: "A promise of big returns fast is the warning sign: big possible gains always come " +
+      "with big possible losses. Trading often means more fees and more emotional choices, " +
+      "like selling in a panic. Research shows most people who frequently pick and trade hot " +
+      "stocks end up doing worse than a simple index fund. If a stranger online is sure about " +
+      "a stock, ask what they gain by telling you.",
+  },
+];
+
+function wordCount(text) {
+  return text.trim().split(/\s+/).length;
+}
+
 // In the browser, functions above are already global. Node has no
 // globals between files, so tests.js needs them handed over here.
 // `module` only exists in Node, which is why we check first.
@@ -596,5 +652,7 @@ if (typeof module !== "undefined") {
     holdingStats,
     portfolioStats,
     describeGain,
+    LESSONS,
+    wordCount,
   };
 }

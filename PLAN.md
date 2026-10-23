@@ -67,7 +67,7 @@ Educational only. Fake money. No "buy this" advice anywhere.
   Search a stock or ETF by ticker and show its latest (possibly delayed) price.
 - [x] **4.2 Buy and sell.** Buy and sell fake shares. Track holdings, average cost,
   current value and gain or loss. All math in logic.js with tests.
-- [ ] **4.3 Lesson cards.** 6 short cards: stock, ETF, diversification, fees,
+- [x] **4.3 Lesson cards.** 6 short cards: stock, ETF, diversification, fees,
   risk vs time, why "get rich quick" fails. Max 80 words each, plain language.
 - [ ] **4.4 Savings link.** On a savings goal: "Practice investing this amount"
   copies the goal's amount into the simulator as fake money, and shows what it

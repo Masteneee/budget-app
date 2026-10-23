@@ -405,4 +405,18 @@ assert.strictEqual(logic.describeGain(1500, 4.3), "+$15.00 (+4.3%)");
 assert.strictEqual(logic.describeGain(-2000, -10), "-$20.00 (-10.0%)");
 assert.strictEqual(logic.describeGain(0, 0), "$0.00 (0.0%)");
 
+// Lesson cards: exactly 6, each 80 words or fewer, each with a title
+assert.strictEqual(logic.wordCount("  one two   three "), 3);
+assert.strictEqual(logic.LESSONS.length, 6);
+for (const lesson of logic.LESSONS) {
+  assert.ok(lesson.title.length > 0, "a lesson has no title");
+  const words = logic.wordCount(lesson.text);
+  assert.ok(words <= 80, '"' + lesson.title + '" has ' + words + " words (max 80)");
+}
+
+// The fees example in the lesson: $10,000 at 6% for 30 years, 1% vs 0.1% fee
+const withHighFee = 10000 * Math.pow(1 + 0.06 - 0.01, 30);
+const withLowFee = 10000 * Math.pow(1 + 0.06 - 0.001, 30);
+assert.ok(Math.abs(withLowFee - withHighFee - 12000) < 1000, "fee lesson number is off");
+
 console.log("All tests passed");

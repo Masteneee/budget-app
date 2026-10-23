@@ -774,6 +774,17 @@ document.getElementById("buy-button").addEventListener("click", () => trade("buy
 document.getElementById("sell-button").addEventListener("click", () => trade("sell"));
 document.getElementById("trade-shares").addEventListener("input", renderTradePreview);
 
+// Built once: the lessons never change while the app is open
+function renderLessons() {
+  const container = document.getElementById("lesson-list");
+  for (const lesson of LESSONS) {
+    const card = makeElement("details", "lesson", "");
+    card.appendChild(makeElement("summary", "", lesson.title));
+    card.appendChild(makeElement("p", "", lesson.text));
+    container.appendChild(card);
+  }
+}
+
 document.getElementById("refresh-prices").addEventListener("click", async () => {
   const message = document.getElementById("refresh-message");
   message.textContent = "Refreshing...";
@@ -895,6 +906,7 @@ typeIncomeButton.addEventListener("click", () => setAddType("income"));
 renderCategoryButtons();
 renderBudgetInputs();
 apiKeyInput.value = loadApiKey();
+renderLessons();
 fillSettingsForm();
 dateInput.value = toDateString(new Date());
 render();

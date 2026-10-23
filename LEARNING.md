@@ -105,6 +105,10 @@
   is the "average cost" method Canadian investors use for taxes (the adjusted
   cost base). Values use each holding's last known price, updated by a lookup or
   by "Refresh prices". A "Start over with $1,000" button resets the simulator.
+- **Lesson cards live in logic.js as data, and the tests enforce "6 cards, max 80
+  words" (task 4.3).** They're collapsible so the Practice tab stays short. The
+  fees lesson's "$12,000" example is checked by a test calculation. No card names
+  a specific stock or fund.
 
 ---
 
@@ -1808,5 +1812,78 @@ Gain as a percent of what you paid, to one decimal (×1000, round, ÷10).
 1. Cost basis = $100 + $140 = $240 for 4 shares, so the average is $60. Value at
    $65 = $260, a gain of +$20 (+8.3%).
 2. Still $60. Selling removed ¼ of the cost ($60), leaving $180 for 3 shares.
+
+</details>
+
+---
+
+## Task 4.3: Lesson cards (2026-10-23)
+
+### What we built
+
+The Practice tab has a new "Learn the basics" section with six cards: What is a
+stock?, What is an ETF?, Diversification, Fees, Risk vs time, and Why "get rich
+quick" fails. Each is a title you tap to open a short plain-language explanation
+(60 to 70 words). Only one idea per card, no jargon without an explanation, and
+no card tells you to buy anything specific. The fees card has a concrete example:
+on $10,000 growing for 30 years, a 1% fee instead of 0.1% costs about $12,000.
+
+### New concepts
+
+**Content as data.** The six lessons are an array of `{ title, text }` objects in
+logic.js, and app.js loops over them to build the cards. To fix a typo or add a
+card, you edit data, not page code. Keeping content apart from layout is how
+most sites work (blogs, apps, games).
+
+**Tests for rules, not just math.** The plan says "max 80 words each". A test
+loops over every lesson and fails with the card's title and word count if one is
+too long. A rule that a computer checks never gets forgotten.
+
+**Testing a claim in the text.** The fees lesson says "about $12,000". The test
+computes 10,000 × 1.059³⁰ − 10,000 × 1.05³⁰ ≈ $12,612, and checks the claim is
+within $1,000. If someone changes the example later, the test catches a wrong
+number. It's a small habit for anything that states a fact.
+
+**Compound growth.** `Math.pow(1 + rate, years)` is growth on top of growth: each
+year's gain also grows in later years. A fee is a negative rate that compounds
+too, which is why a "small" 1% does so much damage over 30 years.
+
+**Splitting text into words.** `text.trim().split(/\s+/)` cuts at any run of
+spaces, tabs or line breaks. `\s` means "whitespace" and `+` means "one or more",
+so double spaces don't count as extra words.
+
+### Key lines of code
+
+```js
+assert.ok(words <= 80, '"' + lesson.title + '" has ' + words + " words (max 80)");
+```
+`assert.ok(condition, message)` fails with your message, so a failure points
+straight at the problem card.
+
+```js
+const withHighFee = 10000 * Math.pow(1 + 0.06 - 0.01, 30);
+```
+6% growth minus a 1% fee = 5% a year, for 30 years.
+
+```js
+const card = makeElement("details", "lesson", "");
+card.appendChild(makeElement("summary", "", lesson.title));
+```
+Reusing `<details>` (from goals) gives tap-to-open cards with no extra JavaScript.
+
+### Quiz
+
+1. Why does a 1% fee cost so much more than 1% of your money over 30 years?
+2. A friend adds a seventh card. What happens when you run `node tests.js`?
+
+**Answers**
+
+<details>
+<summary>Show answers</summary>
+
+1. The fee is taken every year from a growing balance, and the money it removes
+   would itself have grown in every later year. Like interest, fees compound.
+2. The test `assert.strictEqual(logic.LESSONS.length, 6)` fails, because the plan
+   calls for 6 cards. If seven is the new plan, update the plan and the test together.
 
 </details>

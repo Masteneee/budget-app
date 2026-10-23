@@ -591,3 +591,15 @@ details summary {
   width: 100%;
   margin-top: 8px;
 }
+
+.lesson {
+  border-bottom: 1px solid #eceae3;
+}
+
+.lesson:last-child {
+  border-bottom: none;
+}
+
+.lesson p {
+  margin-top: 0;
+}

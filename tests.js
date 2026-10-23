@@ -441,4 +441,24 @@ const withHighFee = 10000 * Math.pow(1 + 0.06 - 0.01, 30);
 const withLowFee = 10000 * Math.pow(1 + 0.06 - 0.001, 30);
 assert.ok(Math.abs(withLowFee - withHighFee - 12000) < 1000, "fee lesson number is off");
 
+// greetingFor
+assert.strictEqual(logic.greetingFor(8), "Good morning");
+assert.strictEqual(logic.greetingFor(12), "Good afternoon");
+assert.strictEqual(logic.greetingFor(17), "Good afternoon");
+assert.strictEqual(logic.greetingFor(18), "Good evening");
+assert.strictEqual(logic.greetingFor(0), "Good morning");
+
+// dailyLeft: $500 pay on day 1, $20 on day 3, $15 on day 3, $5 on day 5
+const dayEntries = [
+  { type: "income", amountCents: 50000, date: "2026-10-01" },
+  { type: "expense", amountCents: 2000, date: "2026-10-03" },
+  { type: "expense", amountCents: 1500, date: "2026-10-03" },
+  { type: "expense", amountCents: 500, date: "2026-10-05" },
+  { type: "expense", amountCents: 9999, date: "2026-09-30" }, // other month
+];
+assert.deepStrictEqual(logic.dailyLeft(dayEntries, "2026-10", 5), [50000, 50000, 46500, 46500, 46000]);
+// Entries after lastDay (later this month) are left out
+assert.deepStrictEqual(logic.dailyLeft(dayEntries, "2026-10", 3), [50000, 50000, 46500]);
+assert.deepStrictEqual(logic.dailyLeft([], "2026-10", 2), [0, 0]);
+
 console.log("All tests passed");

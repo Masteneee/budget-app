@@ -21,18 +21,30 @@ const editDate = document.getElementById("edit-date");
 const editMessage = document.getElementById("edit-message");
 const deleteConfirm = document.getElementById("delete-confirm");
 
-// Calm, easy-to-tell-apart colours; each category always keeps its colour
+// Calm, easy-to-tell-apart colours, bright enough for a dark background;
+// each category always keeps its colour
 const CATEGORY_COLORS = {
-  Food: "#3a7d6b",
-  Transport: "#5b8db8",
-  Fun: "#e0a458",
-  School: "#8e7cc3",
-  Bills: "#7d8a84",
-  Other: "#c4b48a",
+  Food: "#5fd3a5",
+  Transport: "#6fa8dc",
+  Fun: "#f0b46b",
+  School: "#a993e0",
+  Bills: "#9aa8a2",
+  Other: "#d8c79a",
 };
+
+// The mint used for "money" lines and fills; never red (no guilt colours)
+const LINE_COLOR = "#5fd3a5";
+const CARD_COLOR = "#1a1a1a";
 
 // Created on the first render, then only its data is updated
 let categoryChart = null;
+let lineChart = null;
+
+// Chart.js draws dark text by default; on a dark page it needs light text
+if (typeof Chart !== "undefined") {
+  Chart.defaults.color = "#8e8e8e";
+  Chart.defaults.borderColor = "#2a2a2a";
+}
 
 // The month being viewed, like "2026-10". Starts on the current month.
 let viewMonth = monthKey(toDateString(new Date()));
@@ -74,6 +86,22 @@ function addEntry(category) {
   noteInput.value = "";
   dateInput.value = toDateString(new Date());
   amountInput.focus();
+}
+
+// A rounded square with one letter, like an app icon: "F" for Food.
+// "33" at the end of a colour adds transparency (about 20%).
+function makeIcon(letter, color) {
+  const icon = makeElement("span", "row-icon", letter.charAt(0).toUpperCase());
+  icon.style.background = color + "33";
+  icon.style.color = color;
+  icon.setAttribute("aria-hidden", "true");
+  return icon;
+}
+
+function renderGreeting() {
+  const name = data.settings.name;
+  document.getElementById("greeting").textContent =
+    greetingFor(new Date().getHours()) + (name ? ", " + name : "");
 }
 
 // Builds a small element with a class and text. textContent (not
@@ -138,7 +166,7 @@ function renderChart(totals) {
       type: "doughnut",
       data: {
         labels: labels,
-        datasets: [{ data: values, backgroundColor: colors, borderColor: "#ffffff", borderWidth: 2 }],
+        datasets: [{ data: values, backgroundColor: colors, borderColor: CARD_COLOR, borderWidth: 3 }],
       },
       options: {
         plugins: {
@@ -158,6 +186,62 @@ function renderChart(totals) {
     categoryChart.data.datasets[0].data = values;
     categoryChart.data.datasets[0].backgroundColor = colors;
     categoryChart.update();
+  }
+}
+
+// The big line under "Safe to spend": money left at the end of each day
+function renderLineChart() {
+  const wrap = document.getElementById("line-wrap");
+  const today = toDateString(new Date());
+  const isCurrent = viewMonth === monthKey(today);
+  const year = Number(viewMonth.slice(0, 4));
+  const monthNumber = Number(viewMonth.slice(5, 7));
+  // Past months: every day. This month: up to today, since the rest hasn't happened
+  const lastDay = isCurrent ? Number(today.slice(8, 10)) : new Date(year, monthNumber, 0).getDate();
+  const series = dailyLeft(data.entries, viewMonth, lastDay);
+  const hasData = entriesInMonth(data.entries, viewMonth).length > 0;
+
+  if (typeof Chart === "undefined" || !hasData) {
+    wrap.hidden = true;
+    return;
+  }
+  wrap.hidden = false;
+  const labels = series.map((_, index) => formatShortDate(viewMonth + "-" + String(index + 1).padStart(2, "0")));
+
+  if (lineChart === null) {
+    lineChart = new Chart(document.getElementById("line-chart"), {
+      type: "line",
+      data: {
+        labels: labels,
+        datasets: [{
+          data: series,
+          borderColor: LINE_COLOR,
+          borderWidth: 2,
+          // A soft see-through fill under the line, like a shadow
+          backgroundColor: LINE_COLOR + "1a",
+          fill: true,
+          pointRadius: 0,
+          pointHoverRadius: 5,
+          tension: 0.25,
+        }],
+      },
+      options: {
+        maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
+        scales: {
+          x: { grid: { display: false }, ticks: { maxTicksLimit: 6 } },
+          y: { display: false },
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: (context) => " " + formatCents(context.raw) + " left" } },
+        },
+      },
+    });
+  } else {
+    lineChart.data.labels = labels;
+    lineChart.data.datasets[0].data = series;
+    lineChart.update();
   }
 }
 
@@ -369,6 +453,7 @@ function render() {
   const entries = entriesInMonth(data.entries, viewMonth);
   renderMonthSwitcher();
   renderSafeToSpend();
+  renderLineChart();
   renderTotals(entries);
   renderRuleCard();
   renderCategoryTotals(entries);
@@ -393,6 +478,7 @@ function renderList(monthEntries) {
     row.type = "button";
     row.className = entry.type === "income" ? "entry income" : "entry";
     row.addEventListener("click", () => openEditor(entry));
+    row.appendChild(makeIcon(entry.category, CATEGORY_COLORS[entry.category] || LINE_COLOR));
     const details = makeElement("div", "entry-details", "");
     details.appendChild(makeElement("span", "entry-category", entry.category));
     if (entry.note) {
@@ -497,6 +583,7 @@ const wageInput = document.getElementById("wage");
 const settingsMessage = document.getElementById("settings-message");
 
 function fillSettingsForm() {
+  document.getElementById("user-name").value = data.settings.name;
   const wage = data.settings.hourlyWageCents;
   wageInput.value = wage ? (wage / 100).toFixed(2) : "";
   for (const radio of document.querySelectorAll('input[name="budget-style"]')) {
@@ -523,10 +610,12 @@ for (const radio of document.querySelectorAll('input[name="budget-style"]')) {
 
 document.getElementById("settings-form").addEventListener("submit", (event) => {
   event.preventDefault();
+  data.settings.name = document.getElementById("user-name").value.trim();
+  renderGreeting();
   const text = wageInput.value.trim();
   if (text === "") {
     data.settings.hourlyWageCents = null;
-    settingsMessage.textContent = "Hours of work turned off";
+    settingsMessage.textContent = "Settings saved";
   } else {
     const wageCents = parseAmountToCents(text);
     if (wageCents === null) {
@@ -670,6 +759,7 @@ document.getElementById("import-yes").addEventListener("click", () => {
   importConfirm.hidden = true;
   viewMonth = monthKey(toDateString(new Date()));
   fillSettingsForm();
+  renderGreeting();
   renderBudgetInputs();
   render();
   backupMessage.textContent = "Backup loaded";
@@ -729,7 +819,9 @@ function renderHoldings() {
     const stats = holdingStats(holding, holding.lastPriceCents);
     const item = makeElement("li", "goal", "");
     const top = makeElement("div", "goal-top", "");
-    top.appendChild(makeElement("span", "goal-name", ticker));
+    const name = makeElement("span", "goal-name ticker-name", ticker);
+    name.prepend(makeIcon(ticker, "#d9d9d9"));
+    top.appendChild(name);
     top.appendChild(makeElement("span", "category-amount", formatCents(stats.valueCents)));
     item.appendChild(top);
     item.appendChild(makeElement("p", "budget-text",
@@ -946,6 +1038,8 @@ renderBudgetInputs();
 apiKeyInput.value = loadApiKey();
 renderLessons();
 fillSettingsForm();
+renderGreeting();
 dateInput.value = toDateString(new Date());
 render();
-amountInput.focus();
+// Ready to type, without scrolling the headline number off screen
+amountInput.focus({ preventScroll: true });

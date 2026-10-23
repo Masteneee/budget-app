@@ -8,8 +8,8 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header>
-    <h1>Budget App</h1>
+  <header class="top-bar">
+    <h1 id="greeting">Good afternoon</h1>
     <!-- role="tablist" / "tab" tell screen readers these switch views -->
     <div class="tabs" role="tablist">
       <button type="button" role="tab" id="tab-budget" aria-selected="true" aria-controls="budget-tab">Budget</button>
@@ -17,28 +17,37 @@
     </div>
   </header>
 
-  <main id="budget-tab" role="tabpanel" aria-labelledby="tab-budget">
+  <main id="budget-tab" class="layout" role="tabpanel" aria-labelledby="tab-budget">
+    <!-- Two columns on wide screens (main + sidebar), one column on phones -->
+    <div class="col-main">
     <nav class="month-switcher" aria-label="Choose a month">
       <button type="button" id="month-prev" class="secondary" aria-label="Previous month">&#9664;</button>
       <span id="month-label" class="month-label"></span>
       <button type="button" id="month-next" class="secondary" aria-label="Next month">&#9654;</button>
     </nav>
 
-    <section id="summary" class="summary">
+    <section id="summary" class="hero">
       <div id="safe-box" class="safe-box">
         <span class="summary-label">Safe to spend</span>
         <span class="safe-value"><span id="safe-per-day">$0.00</span> <span class="safe-unit">/ day</span></span>
         <span id="safe-detail" class="safe-detail"></span>
       </div>
-      <div>
+      <div id="line-wrap" class="line-wrap" hidden>
+        <canvas id="line-chart" role="img" aria-label="Money left each day this month"></canvas>
+      </div>
+      <p class="chart-caption">Money left, day by day</p>
+    </section>
+
+    <section class="stat-row" aria-label="Month totals">
+      <div class="stat-card">
         <span class="summary-label">Money in</span>
         <span id="total-in" class="summary-value">$0.00</span>
       </div>
-      <div>
+      <div class="stat-card">
         <span class="summary-label">Money out</span>
         <span id="total-out" class="summary-value">$0.00</span>
       </div>
-      <div class="summary-main">
+      <div class="stat-card">
         <span id="left-label" class="summary-label">Left this month</span>
         <span id="total-left" class="summary-value">$0.00</span>
       </div>
@@ -62,20 +71,10 @@
       <p id="add-message" class="message" aria-live="polite"></p>
     </section>
 
-    <section id="rule-card" hidden>
-      <h2>50/30/20 this month</h2>
-      <p id="rule-empty" class="empty">Add this month's income to see your 50/30/20 split.</p>
-      <ul id="rule-list" class="rule-list"></ul>
-    </section>
-
-    <section id="by-category">
-      <h2>Where it went</h2>
-      <p id="category-empty" class="empty">Your spending by category will show up here.</p>
-      <!-- Chart.js draws on a <canvas>: a blank rectangle you paint with code -->
-      <div id="chart-wrap" class="chart-wrap" hidden>
-        <canvas id="category-chart" aria-label="Spending by category chart" role="img"></canvas>
-      </div>
-      <ul id="category-list" class="category-list"></ul>
+    <section id="this-month">
+      <h2 id="list-title">This month</h2>
+      <p id="month-empty" class="empty">Nothing logged in this month yet.</p>
+      <ul id="entry-list" class="entry-list"></ul>
     </section>
 
     <section id="compare">
@@ -84,11 +83,9 @@
       <ul id="compare-list" class="compare-list"></ul>
     </section>
 
-    <section id="this-month">
-      <h2 id="list-title">This month</h2>
-      <p id="month-empty" class="empty">Nothing logged in this month yet.</p>
-      <ul id="entry-list" class="entry-list"></ul>
-    </section>
+    </div>
+
+    <aside class="col-side">
     <section id="goals">
       <h2>Savings goals</h2>
       <p id="goals-empty" class="empty">Saving for something? Create a goal and watch it fill up.</p>
@@ -110,6 +107,22 @@
           <p id="goal-message" class="message" aria-live="polite"></p>
         </form>
       </details>
+    </section>
+
+    <section id="rule-card" hidden>
+      <h2>50/30/20 this month</h2>
+      <p id="rule-empty" class="empty">Add this month's income to see your 50/30/20 split.</p>
+      <ul id="rule-list" class="rule-list"></ul>
+    </section>
+
+    <section id="by-category">
+      <h2>Where it went</h2>
+      <p id="category-empty" class="empty">Your spending by category will show up here.</p>
+      <!-- Chart.js draws on a <canvas>: a blank rectangle you paint with code -->
+      <div id="chart-wrap" class="chart-wrap" hidden>
+        <canvas id="category-chart" aria-label="Spending by category chart" role="img"></canvas>
+      </div>
+      <ul id="category-list" class="category-list"></ul>
     </section>
 
     <section id="budgets">
@@ -144,6 +157,9 @@
       <p class="hint">Money left in a category's budget is added to next month's budget for
         that category. Going over never reduces next month.</p>
       <form id="settings-form">
+        <label>Your first name (for the greeting)
+          <input id="user-name" type="text" maxlength="30" autocomplete="given-name">
+        </label>
         <label>Hourly wage (after tax, if you know it)
           <input id="wage" type="text" inputmode="decimal" placeholder="e.g. 16.10" autocomplete="off">
         </label>
@@ -173,25 +189,28 @@
         </div>
       </div>
     </section>
+    </aside>
   </main>
 
-  <main id="practice-tab" role="tabpanel" aria-labelledby="tab-practice" hidden>
+  <main id="practice-tab" class="layout" role="tabpanel" aria-labelledby="tab-practice" hidden>
+    <div class="col-main">
     <section class="practice-banner">
       <strong>Practice mode.</strong> Fake money, real prices. This is for learning how
       investing works, not advice to buy anything.
     </section>
 
-    <section id="wallet" class="summary">
-      <div class="summary-main">
-        <span class="summary-label">Practice account total</span>
-        <span id="practice-total" class="safe-value">$1,000.00</span>
-        <span id="practice-gain" class="safe-detail"></span>
-      </div>
-      <div>
+    <section id="wallet" class="hero">
+      <span class="summary-label">Practice account total</span>
+      <span id="practice-total" class="safe-value">$1,000.00</span>
+      <span id="practice-gain" class="safe-detail"></span>
+    </section>
+
+    <section class="stat-row" aria-label="Practice account">
+      <div class="stat-card">
         <span class="summary-label">Cash</span>
         <span id="practice-cash" class="summary-value">$1,000.00</span>
       </div>
-      <div>
+      <div class="stat-card">
         <span class="summary-label">Investments</span>
         <span id="practice-invested" class="summary-value">$0.00</span>
       </div>
@@ -240,6 +259,15 @@
       <p class="hint">US stocks and ETFs. Prices can be delayed and are shown in US dollars.</p>
     </section>
 
+    <section id="lessons">
+      <h2>Learn the basics</h2>
+      <p class="hint">Six short cards in plain language. Tap one to open it.</p>
+      <div id="lesson-list" class="lesson-list"></div>
+    </section>
+
+    </div>
+
+    <aside class="col-side">
     <section id="holdings-card">
       <h2>Your practice investments</h2>
       <p id="holdings-empty" class="empty">Nothing bought yet. Look up a ticker above to practice.</p>
@@ -256,12 +284,6 @@
       </div>
     </section>
 
-    <section id="lessons">
-      <h2>Learn the basics</h2>
-      <p class="hint">Six short cards in plain language. Tap one to open it.</p>
-      <div id="lesson-list" class="lesson-list"></div>
-    </section>
-
     <section id="api-key-card">
       <h2>Price data</h2>
       <p class="hint">Prices come from Finnhub. Get a free key at
@@ -274,6 +296,7 @@
         <p id="api-key-message" class="message" aria-live="polite"></p>
       </form>
     </section>
+    </aside>
   </main>
 
   <!-- A <dialog> is a built-in popup. It stays hidden until JavaScript

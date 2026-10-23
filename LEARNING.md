@@ -116,6 +116,10 @@
 - **The projection uses 2%, 5% and 7% a year over 1, 5, 10 and 20 years (task 4.4).**
   Fixed example rates, not predictions, under a clear "past results don't predict
   the future" label. 2% stands in for a savings account.
+- **Dark dashboard redesign (after Phase 4).** Dark theme, greeting header, pill
+  buttons, a two-column layout from 960px wide, and a "money left, day by day" line
+  chart. The line is mint green, not red like many finance apps, because of the
+  no-guilt rule. Category colours were brightened to read well on dark.
 
 ---
 
@@ -1977,5 +1981,92 @@ Use real savings when there are some; otherwise imagine the full target.
    put in, not as a gain.
 2. About 10 years (72 ÷ 7 ≈ 10.3). The table agrees: $400 becomes $786.86 after
    10 years, nearly double.
+
+</details>
+
+---
+
+## Extra: Dark dashboard redesign (2026-10-23)
+
+### What we built
+
+A new look inspired by modern investing apps. The page is now dark, with a
+greeting at the top ("Good evening, Mastene"; add your name in Settings) and
+the Budget and Practice tabs as pill buttons on the right. Under the big "Safe to
+spend" number there's a line chart of money left at the end of each day this
+month. Money in, out and left sit in three small cards. On a laptop the page splits
+into two columns: everyday things (adding, the list) on the left, and goals,
+budgets and settings in a sidebar on the right. On a phone everything stacks into
+one column, as before. Every list row now starts with a coloured letter icon.
+
+### New concepts
+
+**Theming with CSS variables.** Most colours were already variables (`--surface`,
+`--text`...), so going dark was mostly changing their values in one place. The few
+hard-coded colours (like `#eceae3` borders) became a new `--border` variable.
+`color-scheme: dark` tells the browser to draw its own controls (date pickers,
+checkboxes) in dark mode too.
+
+**Responsive two-column layout.** Inside `@media (min-width: 960px)`, `.layout`
+becomes a grid with `grid-template-columns: minmax(0, 2fr) minmax(0, 1fr)`: the main
+column gets 2 shares of the width and the sidebar 1. `minmax(0, ...)` lets a column
+shrink below its content's natural width, so a wide chart can't push the page sideways.
+
+**The `[hidden]` trap (a real bug we hit).** The browser hides `hidden` elements
+with its own `display: none` rule, but *any* CSS rule we write that sets `display`
+wins over it. Giving the tabs `display: grid` made the hidden Practice tab show up
+under the Budget tab. The fix is one global rule, `[hidden] { display: none
+!important; }`. `!important` makes it win over everything, which is fine here
+because "hidden" should always mean hidden.
+
+**`focus({ preventScroll: true })`.** Focusing the amount box on load used to
+scroll the page down to it, hiding the headline number on a laptop. This option
+puts the cursor there without scrolling.
+
+**Line chart data from a pure function.** `dailyLeft` turns entries into one
+number per day (a running total), and Chart.js just draws the array. All the
+logic is tested in Node; the chart only does drawing.
+
+**Colours with transparency.** `color + "33"` turns `#5fd3a5` into `#5fd3a533`:
+the last two hex digits are opacity (33 hex = 51/255, about 20%). That's how the
+icon squares get a soft tinted background with a bright letter.
+
+### Key lines of code
+
+```js
+running += changeByDay[day];
+series.push(running);
+```
+Each day's value is yesterday's value plus today's changes: a running total.
+
+```css
+[hidden] {
+  display: none !important;
+}
+```
+One rule that makes `hidden` reliable everywhere.
+
+```js
+return hour < 18 ? "Good afternoon" : "Good evening";
+```
+`greetingFor` takes the hour as a parameter (instead of reading the clock), so the
+tests can check any time of day.
+
+### Quiz
+
+1. You earn $500 on day 1, spend $30 on day 2 and $20 on day 4. What does
+   `dailyLeft` return for days 1 to 4?
+2. Why did the Practice tab appear under the Budget tab before the `[hidden]` fix?
+
+**Answers**
+
+<details>
+<summary>Show answers</summary>
+
+1. `[50000, 47000, 47000, 45000]` (in cents): $500, $470, $470 (nothing changed on
+   day 3), $450.
+2. `hidden` works through the browser's built-in `display: none`. Our
+   `.layout { display: grid }` rule is more specific, so it won, and the hidden
+   tab was displayed as a grid.
 
 </details>

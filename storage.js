@@ -27,6 +27,8 @@ function emptyData() {
     settings: {
       // null means "not set": the hours-of-work feature stays hidden
       hourlyWageCents: null,
+      // Shown in the greeting: "Good afternoon, Sam"
+      name: "",
       // "simple" (just track) or "503020" (needs, wants, savings)
       budgetStyle: "simple",
       // The month rollover was turned on, like "2026-10"; null means off

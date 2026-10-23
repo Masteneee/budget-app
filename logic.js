@@ -575,6 +575,35 @@ function describeGain(gainCents, gainPercent) {
   return sign + formatCents(gainCents) + " (" + percentSign + gainPercent.toFixed(1) + "%)";
 }
 
+// ---------- Dashboard ----------
+
+// "Good morning" before noon, "Good afternoon" until 6 pm, then "Good evening"
+function greetingFor(hour) {
+  if (hour < 12) {
+    return "Good morning";
+  }
+  return hour < 18 ? "Good afternoon" : "Good evening";
+}
+
+// Money left (in minus out) at the end of each day, from day 1 to lastDay.
+// This is the line in the big chart: [day1, day2, ...] in cents.
+function dailyLeft(entries, month, lastDay) {
+  const changeByDay = new Array(lastDay + 1).fill(0);
+  for (const entry of entriesInMonth(entries, month)) {
+    const day = Number(entry.date.slice(8, 10));
+    if (day <= lastDay) {
+      changeByDay[day] += entry.type === "income" ? entry.amountCents : -entry.amountCents;
+    }
+  }
+  const series = [];
+  let running = 0;
+  for (let day = 1; day <= lastDay; day++) {
+    running += changeByDay[day];
+    series.push(running);
+  }
+  return series;
+}
+
 // ---------- Lesson cards ----------
 // Plain language, 80 words max each (tests.js checks), and never a
 // suggestion to buy any specific stock or fund.
@@ -683,5 +712,7 @@ if (typeof module !== "undefined") {
     projectionRows,
     LESSONS,
     wordCount,
+    greetingFor,
+    dailyLeft,
   };
 }

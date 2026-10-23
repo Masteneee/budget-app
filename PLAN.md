@@ -9,7 +9,7 @@ How to start a session: "Read CLAUDE.md and PLAN.md. Do the next unchecked task 
 
 ## Phase 0: Setup
 
-- [ ] **0.1 Project skeleton.** Create index.html, style.css, app.js, logic.js,
+- [x] **0.1 Project skeleton.** Create index.html, style.css, app.js, logic.js,
   storage.js, tests.js and LEARNING.md. The page shows the app name and an empty
   "This month" section. tests.js runs one trivial test and prints "All tests passed".
   Explain in LEARNING.md what each file is for and how the browser loads them.
@@ -18,27 +18,27 @@ How to start a session: "Read CLAUDE.md and PLAN.md. Do the next unchecked task 
 
 Goal: adding an expense takes under 5 seconds.
 
-- [ ] **1.1 Add an expense.** A form: amount (big, first, focused on load), category
+- [x] **1.1 Add an expense.** A form: amount (big, first, focused on load), category
   buttons (Food, Transport, Fun, School, Bills, Other), optional note. Date defaults
   to today. Saved to localStorage through storage.js. Amount stored in cents.
-- [ ] **1.2 Show the list.** This month's entries, newest first, with category, note,
+- [x] **1.2 Show the list.** This month's entries, newest first, with category, note,
   amount and date. Shows a friendly message when the list is empty.
-- [ ] **1.3 Edit and delete.** Tap an entry to edit it or delete it, with a confirm
+- [x] **1.3 Edit and delete.** Tap an entry to edit it or delete it, with a confirm
   step before deleting.
-- [ ] **1.4 Income.** Add income entries (job pay, gifts). Show "Money in", "Money out"
+- [x] **1.4 Income.** Add income entries (job pay, gifts). Show "Money in", "Money out"
   and "Left this month" at the top. Test the totals in tests.js.
-- [ ] **1.5 Totals per category.** A simple list of how much went to each category
+- [x] **1.5 Totals per category.** A simple list of how much went to each category
   this month, biggest first. Logic in logic.js with tests.
-- [ ] **1.6 Phone-friendly layout.** Make the page comfortable on a phone screen
+- [x] **1.6 Phone-friendly layout.** Make the page comfortable on a phone screen
   (big tap targets, one column). Explain the CSS used in LEARNING.md.
 
 ## Phase 2: See it
 
-- [ ] **2.1 Category chart.** A doughnut or bar chart of this month's spending by
+- [x] **2.1 Category chart.** A doughnut or bar chart of this month's spending by
   category using Chart.js from a CDN. Explain what a library and a CDN are.
-- [ ] **2.2 Month switcher.** Buttons to view previous months. Compare this month vs
+- [x] **2.2 Month switcher.** Buttons to view previous months. Compare this month vs
   last month per category ("Food: $40 less than last month").
-- [ ] **2.3 Hours of work.** A settings field for hourly wage. When set, each expense
+- [x] **2.3 Hours of work.** A settings field for hourly wage. When set, each expense
   also shows how many hours of work it cost (e.g. "1.5 h"). Tested in logic.js.
 - [ ] **2.4 Export and import.** Download all data as a JSON file and load it back,
   so data isn't lost if the browser is cleared.

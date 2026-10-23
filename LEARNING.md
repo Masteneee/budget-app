@@ -19,6 +19,9 @@
   is rejected instead of being rounded silently.
 - **"This month" means the calendar month on your device (task 1.2).** Entries from
   earlier months are kept, just not shown. The month switcher comes in task 2.2.
+- **Editing happens in a popup (`<dialog>`), and deleting needs a second tap on
+  "Yes, delete" (task 1.3).** A built-in dialog is less code than building our
+  own overlay, and an in-page confirm looks calmer than the browser's `confirm()` box.
 
 ---
 
@@ -326,5 +329,94 @@ date. Reading the numbers straight from the text avoids it.
 2. `innerHTML` treats the text as HTML, so a note containing a tag (like an
    `<img>` with an `onerror` script) would be run by the browser. With
    `textContent`, it's just shown as letters.
+
+</details>
+
+---
+
+## Task 1.3: Edit and delete (2026-10-23)
+
+### What we built
+
+Every row in the list is now tappable. Tapping one opens a popup with the
+expense already filled in: amount, category (a dropdown), note and date. Change
+anything and tap Save, and the list updates right away. Cancel closes the popup
+without saving. At the bottom there's a quiet "Delete this entry" link. Tapping
+it doesn't delete anything yet: it asks "Delete it for good?" with "Yes, delete"
+and "Keep it". Only the second tap removes the entry. An empty or invalid amount
+gets the same calm message as the add form.
+
+### New concepts
+
+**`<dialog>` and `showModal()`.** A popup built into HTML. `showModal()` opens it
+on top of the page, dims everything behind it (that's the `::backdrop`), and
+blocks clicks outside it. `close()` hides it again. Pressing Escape also closes it.
+
+**The submit event and `preventDefault()`.** When you press Enter or a
+`type="submit"` button inside a `<form>`, the browser fires a "submit" event and
+then, by default, reloads the page to send the form somewhere.
+`event.preventDefault()` says "don't do your default thing, I'll handle it".
+Listening for submit (instead of click on Save) means pressing Enter also saves.
+
+**`map`.** `array.map(fn)` builds a new array of the same length, where each item
+is whatever `fn` returns. In `updateEntry`, we return a changed copy for the
+matching entry and the same entry for all the others.
+
+**Immutability.** `updateEntry` and `removeEntry` never change the array they
+receive; they return a new one. Then `data.entries = ...` swaps in the new
+version. It's a bit more typing, but a function can't secretly break data
+somewhere else, which makes the functions trivial to test.
+
+**`Object.assign({}, entry, changes)`.** Starts with an empty object `{}`, copies
+every field of `entry`, then copies `changes` on top. The result is a new object
+with the changes, and `entry` itself is untouched.
+
+**State variable.** `editingId` remembers which entry the popup is showing. The
+Save and Delete buttons are created once, so they need this shared variable to
+know which entry to act on.
+
+### Key lines of code
+
+```js
+return entries.map((entry) => (entry.id === id ? Object.assign({}, entry, changes) : entry));
+```
+For each entry: is it the one we're editing? If yes, a changed copy. If no, the
+same entry unchanged.
+
+```js
+editForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+```
+Catch the form being sent, and stop the page reload.
+
+```js
+const row = document.createElement("button");
+```
+The row is a real button, not a `<div>` with a click handler. Buttons work with
+the keyboard (Tab, then Enter) and screen readers for free.
+
+```js
+editCategory.appendChild(new Option(category, category));
+```
+`new Option(text, value)` is a shortcut for creating an `<option>` for a
+`<select>` dropdown.
+
+### Quiz
+
+1. If you deleted the line `event.preventDefault();`, what would happen when
+   you tap Save?
+2. `updateEntry(entries, "x", { note: "hi" })` is called, but no entry has id
+   "x". What does it return, and is that a problem?
+
+**Answers**
+
+<details>
+<summary>Show answers</summary>
+
+1. Our code would still run and save, but then the browser would do its default
+   form action and reload the page. You'd see a quick flash, and anything not
+   saved would be lost. It works by accident, which is the worst kind of working.
+2. It returns a new array with the same entries, nothing changed. That's
+   safe: nothing breaks and nothing gets lost. The test file checks this exact case.
 
 </details>

@@ -34,6 +34,39 @@
     </section>
   </main>
 
+  <!-- A <dialog> is a built-in popup. It stays hidden until JavaScript
+       calls showModal(), which also dims and blocks the page behind it. -->
+  <dialog id="edit-dialog">
+    <form id="edit-form">
+      <h2>Edit</h2>
+      <label>Amount
+        <input id="edit-amount" type="text" inputmode="decimal" autocomplete="off">
+      </label>
+      <label>Category
+        <select id="edit-category"></select>
+      </label>
+      <label>Note
+        <input id="edit-note" type="text">
+      </label>
+      <label>Date
+        <input id="edit-date" type="date">
+      </label>
+      <p id="edit-message" class="message" aria-live="polite"></p>
+      <div class="dialog-buttons">
+        <button type="submit">Save</button>
+        <button type="button" id="edit-cancel" class="secondary">Cancel</button>
+      </div>
+      <button type="button" id="delete-start" class="quiet">Delete this entry</button>
+      <div id="delete-confirm" class="delete-confirm" hidden>
+        <p>Delete it for good?</p>
+        <div class="dialog-buttons">
+          <button type="button" id="delete-yes">Yes, delete</button>
+          <button type="button" id="delete-no" class="secondary">Keep it</button>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
   <!-- Order matters: app.js uses functions from logic.js and storage.js,
        so those must load first. Scripts at the end of <body> run after
        the HTML above exists, so app.js can find the elements. -->

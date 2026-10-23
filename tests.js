@@ -43,4 +43,17 @@ assert.strictEqual(sample[0].id, "a");
 assert.strictEqual(logic.formatShortDate("2026-10-23"), "Oct 23");
 assert.strictEqual(logic.formatShortDate("2026-01-05"), "Jan 5");
 
+// updateEntry and removeEntry
+const twoEntries = [
+  { id: "a", amountCents: 100, note: "" },
+  { id: "b", amountCents: 200, note: "bus" },
+];
+const updated = logic.updateEntry(twoEntries, "b", { amountCents: 250 });
+assert.deepStrictEqual(updated[1], { id: "b", amountCents: 250, note: "bus" });
+assert.strictEqual(updated[0], twoEntries[0]);
+assert.strictEqual(twoEntries[1].amountCents, 200); // original untouched
+assert.deepStrictEqual(logic.updateEntry(twoEntries, "zzz", { amountCents: 1 }), twoEntries);
+assert.deepStrictEqual(logic.removeEntry(twoEntries, "a").map((e) => e.id), ["b"]);
+assert.strictEqual(logic.removeEntry(twoEntries, "zzz").length, 2);
+
 console.log("All tests passed");

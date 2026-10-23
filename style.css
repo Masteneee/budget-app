@@ -51,7 +51,8 @@ main section + section {
   margin-top: 16px;
 }
 
-input {
+input,
+select {
   font: inherit;
   width: 100%;
   box-sizing: border-box;
@@ -104,16 +105,31 @@ button {
   padding: 0;
 }
 
+.entry-list li {
+  border-bottom: 1px solid #eceae3;
+}
+
+.entry-list li:last-child {
+  border-bottom: none;
+}
+
+/* Each row is a button so it can be tapped; this removes the
+   default button look so it reads like a list row */
 .entry {
   display: flex;
   justify-content: space-between;
   gap: 12px;
+  width: 100%;
   padding: 10px 0;
-  border-bottom: 1px solid #eceae3;
+  background: none;
+  color: inherit;
+  text-align: left;
+  border-radius: 0;
 }
 
-.entry:last-child {
-  border-bottom: none;
+.entry-details {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 /* Category on top, note below it in grey */
@@ -136,4 +152,49 @@ button {
 .entry-date {
   color: var(--muted);
   font-size: 0.9rem;
+}
+
+dialog {
+  width: min(400px, calc(100% - 32px));
+  border: none;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+/* The dimmed layer behind an open dialog */
+dialog::backdrop {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+dialog h2 {
+  margin-top: 0;
+}
+
+dialog label {
+  display: block;
+  color: var(--muted);
+}
+
+.dialog-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+button.secondary {
+  background: #e8e6df;
+  color: var(--text);
+}
+
+/* Delete is available but doesn't shout */
+button.quiet {
+  background: none;
+  color: var(--muted);
+  text-decoration: underline;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.delete-confirm p {
+  margin-bottom: 8px;
 }

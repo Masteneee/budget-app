@@ -68,6 +68,16 @@ function formatShortDate(dateString) {
   return MONTH_NAMES[month - 1] + " " + day;
 }
 
+// Returns a new array where the entry with this id has the changes
+// applied. We never modify the old array, which keeps bugs local.
+function updateEntry(entries, id, changes) {
+  return entries.map((entry) => (entry.id === id ? Object.assign({}, entry, changes) : entry));
+}
+
+function removeEntry(entries, id) {
+  return entries.filter((entry) => entry.id !== id);
+}
+
 // In the browser, functions above are already global. Node has no
 // globals between files, so tests.js needs them handed over here.
 // `module` only exists in Node, which is why we check first.
@@ -81,5 +91,7 @@ if (typeof module !== "undefined") {
     entriesInMonth,
     sortNewestFirst,
     formatShortDate,
+    updateEntry,
+    removeEntry,
   };
 }

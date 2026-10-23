@@ -10,6 +10,17 @@ const categoryButtons = document.getElementById("category-buttons");
 const addMessage = document.getElementById("add-message");
 const entryList = document.getElementById("entry-list");
 const monthEmpty = document.getElementById("month-empty");
+const editDialog = document.getElementById("edit-dialog");
+const editForm = document.getElementById("edit-form");
+const editAmount = document.getElementById("edit-amount");
+const editCategory = document.getElementById("edit-category");
+const editNote = document.getElementById("edit-note");
+const editDate = document.getElementById("edit-date");
+const editMessage = document.getElementById("edit-message");
+const deleteConfirm = document.getElementById("delete-confirm");
+
+// Which entry the dialog is editing, or null when it's closed
+let editingId = null;
 
 // Good enough to be unique for one person's data: time + random letters
 function makeId() {
@@ -62,8 +73,13 @@ function renderList() {
   monthEmpty.hidden = entries.length > 0;
 
   for (const entry of entries) {
-    const row = document.createElement("li");
+    const item = document.createElement("li");
+    // A real <button> can be reached with the keyboard and read by
+    // screen readers, unlike a clickable <div>
+    const row = document.createElement("button");
+    row.type = "button";
     row.className = "entry";
+    row.addEventListener("click", () => openEditor(entry));
     const details = makeElement("div", "entry-details", "");
     details.appendChild(makeElement("span", "entry-category", entry.category));
     if (entry.note) {
@@ -74,9 +90,67 @@ function renderList() {
     right.appendChild(makeElement("span", "entry-amount", formatCents(entry.amountCents)));
     right.appendChild(makeElement("span", "entry-date", formatShortDate(entry.date)));
     row.appendChild(right);
-    entryList.appendChild(row);
+    item.appendChild(row);
+    entryList.appendChild(item);
   }
 }
+
+function openEditor(entry) {
+  editingId = entry.id;
+  editCategory.innerHTML = "";
+  for (const category of EXPENSE_CATEGORIES) {
+    editCategory.appendChild(new Option(category, category));
+  }
+  // toFixed(2) without "$" so the box holds a plain number to edit
+  editAmount.value = (entry.amountCents / 100).toFixed(2);
+  editCategory.value = entry.category;
+  editNote.value = entry.note;
+  editDate.value = entry.date;
+  editMessage.textContent = "";
+  deleteConfirm.hidden = true;
+  editDialog.showModal();
+}
+
+function closeEditor() {
+  editingId = null;
+  editDialog.close();
+}
+
+editForm.addEventListener("submit", (event) => {
+  // A form's default action reloads the page; we save in JavaScript instead
+  event.preventDefault();
+  const amountCents = parseAmountToCents(editAmount.value);
+  if (amountCents === null) {
+    editMessage.textContent = "Type an amount, like 12.50";
+    editAmount.focus();
+    return;
+  }
+  data.entries = updateEntry(data.entries, editingId, {
+    amountCents: amountCents,
+    category: editCategory.value,
+    note: editNote.value.trim(),
+    date: editDate.value || toDateString(new Date()),
+  });
+  saveData(data);
+  renderList();
+  closeEditor();
+});
+
+document.getElementById("edit-cancel").addEventListener("click", closeEditor);
+
+// Deleting takes two taps so a slip of the thumb can't erase anything
+document.getElementById("delete-start").addEventListener("click", () => {
+  deleteConfirm.hidden = false;
+});
+document.getElementById("delete-no").addEventListener("click", () => {
+  deleteConfirm.hidden = true;
+});
+document.getElementById("delete-yes").addEventListener("click", () => {
+  data.entries = removeEntry(data.entries, editingId);
+  saveData(data);
+  renderList();
+  closeEditor();
+});
 
 // One button per category; tapping it saves, so logging is one tap
 for (const category of EXPENSE_CATEGORIES) {

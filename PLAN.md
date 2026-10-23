@@ -23,7 +23,7 @@ Goal: adding an expense takes under 5 seconds.
   to today. Saved to localStorage through storage.js. Amount stored in cents.
 - [x] **1.2 Show the list.** This month's entries, newest first, with category, note,
   amount and date. Shows a friendly message when the list is empty.
-- [ ] **1.3 Edit and delete.** Tap an entry to edit it or delete it, with a confirm
+- [x] **1.3 Edit and delete.** Tap an entry to edit it or delete it, with a confirm
   step before deleting.
 - [ ] **1.4 Income.** Add income entries (job pay, gifts). Show "Money in", "Money out"
   and "Left this month" at the top. Test the totals in tests.js.

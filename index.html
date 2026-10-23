@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <!-- Without this line, phones zoom out and show a tiny desktop-sized page -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Budget App</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Budget App</h1>
+  </header>
+
+  <main>
+    <section id="summary" class="summary">
+      <div>
+        <span class="summary-label">Money in</span>
+        <span id="total-in" class="summary-value">$0.00</span>
+      </div>
+      <div>
+        <span class="summary-label">Money out</span>
+        <span id="total-out" class="summary-value">$0.00</span>
+      </div>
+      <div class="summary-main">
+        <span class="summary-label">Left this month</span>
+        <span id="total-left" class="summary-value">$0.00</span>
+      </div>
+    </section>
+
+    <section id="add-expense">
+      <!-- aria-pressed tells screen readers which of the two is chosen -->
+      <div class="type-toggle">
+        <button type="button" id="type-expense" aria-pressed="true">Expense</button>
+        <button type="button" id="type-income" aria-pressed="false">Income</button>
+      </div>
+      <!-- inputmode="decimal" shows the number keypad on phones -->
+      <input id="amount" class="amount-input" type="text" inputmode="decimal"
+             placeholder="0.00" aria-label="Amount in dollars" autocomplete="off">
+      <input id="note" type="text" placeholder="Note (optional)" aria-label="Note">
+      <label class="date-label">Date
+        <input id="date" type="date">
+      </label>
+      <p class="hint">Tap a category to save</p>
+      <div id="category-buttons" class="category-buttons"></div>
+      <p id="add-message" class="message" aria-live="polite"></p>
+    </section>
+
+    <section id="by-category">
+      <h2>Where it went</h2>
+      <p id="category-empty" class="empty">Your spending by category will show up here.</p>
+      <ul id="category-list" class="category-list"></ul>
+    </section>
+
+    <section id="this-month">
+      <h2>This month</h2>
+      <p id="month-empty" class="empty">Nothing logged yet this month. Add your first entry above.</p>
+      <ul id="entry-list" class="entry-list"></ul>
+    </section>
+  </main>
+
+  <!-- A <dialog> is a built-in popup. It stays hidden until JavaScript
+       calls showModal(), which also dims and blocks the page behind it. -->
+  <dialog id="edit-dialog">
+    <form id="edit-form">
+      <h2>Edit</h2>
+      <label>Amount
+        <input id="edit-amount" type="text" inputmode="decimal" autocomplete="off">
+      </label>
+      <label>Category
+        <select id="edit-category"></select>
+      </label>
+      <label>Note
+        <input id="edit-note" type="text">
+      </label>
+      <label>Date
+        <input id="edit-date" type="date">
+      </label>
+      <p id="edit-message" class="message" aria-live="polite"></p>
+      <div class="dialog-buttons">
+        <button type="submit">Save</button>
+        <button type="button" id="edit-cancel" class="secondary">Cancel</button>
+      </div>
+      <button type="button" id="delete-start" class="quiet">Delete this entry</button>
+      <div id="delete-confirm" class="delete-confirm" hidden>
+        <p>Delete it for good?</p>
+        <div class="dialog-buttons">
+          <button type="button" id="delete-yes">Yes, delete</button>
+          <button type="button" id="delete-no" class="secondary">Keep it</button>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Order matters: app.js uses functions from logic.js and storage.js,
+       so those must load first. Scripts at the end of <body> run after
+       the HTML above exists, so app.js can find the elements. -->
+  <script src="logic.js"></script>
+  <script src="storage.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

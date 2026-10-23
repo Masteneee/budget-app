@@ -239,8 +239,7 @@ button.quiet {
   flex-direction: column;
 }
 
-/* "Left this month" is the number that matters most, so it spans
-   the full width and is bigger */
+/* "Left this month" spans the full width under in and out */
 .summary-main {
   grid-column: 1 / -1;
 }
@@ -255,9 +254,9 @@ button.quiet {
   font-weight: 600;
 }
 
+/* Safe to spend (below) is now the headline number */
 .summary-main .summary-value {
-  font-size: 2rem;
-  color: var(--accent);
+  font-size: 1.25rem;
 }
 
 .type-toggle {
@@ -329,8 +328,8 @@ button.quiet {
     padding: 12px;
   }
 
-  .summary-main .summary-value {
-    font-size: 1.75rem;
+  .safe-value {
+    font-size: 2rem;
   }
 }
 
@@ -468,4 +467,34 @@ details summary {
 .budget-label {
   display: block;
   color: var(--muted);
+}
+
+/* The most important number: full width, on top, largest */
+.safe-box {
+  grid-column: 1 / -1;
+  padding-bottom: 12px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid #eceae3;
+}
+
+.safe-box[hidden] {
+  display: none;
+}
+
+.safe-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1.1;
+}
+
+.safe-unit {
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.safe-detail {
+  color: var(--muted);
+  font-size: 0.9rem;
 }

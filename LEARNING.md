@@ -64,6 +64,17 @@
   "Where it went" (task 3.2).** Over-plan bars turn a calm slate blue, and the
   text says "$10.00 above your $50.00 plan". Budgeted categories show up even
   before you spend in them. The same budgets apply to every month.
+- **Safe to spend = (left this month − goal money − bills still to pay) ÷ days
+  left, today included (task 3.3).**
+  - *Goal money:* a dated goal's monthly share (what was missing at the start of
+    the month ÷ months left, rounded up), or what you actually put in this month
+    if that's more. Undated or overdue goals count only what you put in this month.
+  - *Bills still to pay:* your Bills budget minus Bills spent this month, or $0 with
+    no Bills budget.
+  - It never goes below $0.00/day; a calm line explains why. It only shows on the
+    current month. With no income logged, it asks you to add income instead.
+- **"Left this month" got smaller (task 3.3).** "Safe to spend" is now the one
+  big number at the top.
 
 ---
 
@@ -1211,5 +1222,88 @@ An element can have several classes separated by spaces. CSS rule
    (`return`) before replacing `data.budgets`, and the message points to Fun.
 2. `Math.min(100, ...)` caps it, because a bar can't be fuller than full. The text
    below still gives the real amount ("$10.00 above your $50.00 plan").
+
+</details>
+
+---
+
+## Task 3.3: Safe to spend (2026-10-23)
+
+### What we built
+
+The top card now leads with one big number: "Safe to spend: $80.00 / day". Under
+it, a small line shows where it comes from: "$850.00 left − $100.00 for goals −
+$30.00 for bills, over 9 days". The goal part is each dated goal's fair share for
+this month (a $400 bike due in January, from October, is $100 a month). The bills
+part is whatever's left of your Bills budget. If your plans use everything, it
+shows $0.00 and says "Your plans use what's left this month, and that's okay."
+With no income logged yet, it asks you to add it. The number only appears on
+the current month, since it's about the days ahead.
+
+### New concepts
+
+**Passing "today" in.** `safeToSpend(..., today)` takes the date as a parameter
+instead of calling `new Date()` inside. A function that reads the clock gives a
+different answer every day, so you can't write a test with a fixed expected
+result. Passing it in keeps logic.js pure: same inputs, same output, forever.
+app.js (which is allowed to be impure) reads the real clock and passes it in.
+
+**Day 0 trick.** `new Date(2026, 10, 0)` asks for "day 0 of November", and
+JavaScript rolls back to the last day of October. `.getDate()` then gives 31. It's
+a well-known shortcut for "how many days in this month", and it handles leap years
+for free (the test checks February 2028 has 29 days).
+
+**`Math.ceil` vs `Math.floor`, on purpose.** Goal shares round *up* (`ceil`), so
+three monthly shares of a $100 goal ($33.34 each) cover the whole $100 instead of
+leaving a cent behind. The daily amount rounds *down* (`floor`), so "safe" is
+never more than you actually have. When rounding money, always ask which
+direction is safe.
+
+**Edge cases.** Most of tests.js for this task is about unusual situations: no
+data, overdue goals, goals already reached, the last day of the month, a leap
+year, planning more than you have. Normal cases are easy to get right; bugs
+hide at the edges.
+
+**Testing math by hand first.** Each test comment shows the arithmetic (900 −
+150 − 50 = 700 left; 700 − 75 − 30 = 595; 595 / 9 = 66.11). Writing the expected
+answer by hand, before running the code, is what makes a test meaningful.
+
+### Key lines of code
+
+```js
+const monthsLeft = monthsBetween(month, monthKey(goal.targetDate)) + 1;
+const missing = Math.max(0, goal.targetCents - savedBefore);
+const monthlyShare = Math.ceil(missing / monthsLeft);
+return Math.max(monthlyShare, addedThisMonth);
+```
+Months left includes this one (+1). `Math.max(0, ...)` handles goals already
+passed. If you put in more than the share, the real amount counts.
+
+```js
+const daysInMonth = new Date(year, monthNumber, 0).getDate();
+const daysLeft = daysInMonth - Number(today.slice(8, 10)) + 1;
+```
+On Oct 23: 31 − 23 + 1 = 9 days, counting today.
+
+```js
+const perDayCents = availableCents > 0 ? Math.floor(availableCents / daysLeft) : 0;
+```
+Never negative, and rounded down to whole cents.
+
+### Quiz
+
+1. It's November 1. You have a $600 goal due January 31 with nothing saved yet.
+   How much does it take from this month?
+2. Why does `safeToSpend` take `today` as a parameter instead of using `new Date()`?
+
+**Answers**
+
+<details>
+<summary>Show answers</summary>
+
+1. Months left = Nov, Dec, Jan = 3. $600 / 3 = $200 this month.
+2. To stay pure and testable. With `new Date()` inside, the result would change
+   every day, and the tests would pass today and fail tomorrow. Passing it in
+   lets tests use a fixed date.
 
 </details>

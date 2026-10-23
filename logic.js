@@ -245,6 +245,73 @@ function goalPercent(goal) {
   return Math.min(percent, 100);
 }
 
+// Months from one "YYYY-MM" to another: monthsBetween("2026-10", "2027-01") is 3
+function monthsBetween(fromMonth, toMonth) {
+  const toNumber = (month) => Number(month.slice(0, 4)) * 12 + Number(month.slice(5, 7));
+  return toNumber(toMonth) - toNumber(fromMonth);
+}
+
+// How much of a goal's money belongs to this month.
+// Dated goals get a fair monthly share of what was missing when the
+// month started; if you put in more than that, the real amount counts.
+// Undated or overdue goals only count what you actually put in.
+function goalMoneyThisMonth(goal, today) {
+  const month = monthKey(today);
+  let savedBefore = 0;
+  let addedThisMonth = 0;
+  for (const contribution of goal.contributions) {
+    if (monthKey(contribution.date) === month) {
+      addedThisMonth += contribution.amountCents;
+    } else if (contribution.date < today) {
+      savedBefore += contribution.amountCents;
+    }
+  }
+  if (!goal.targetDate || goal.targetDate < today) {
+    return addedThisMonth;
+  }
+  // This month counts too, so a goal due this month has 1 month left
+  const monthsLeft = monthsBetween(month, monthKey(goal.targetDate)) + 1;
+  const missing = Math.max(0, goal.targetCents - savedBefore);
+  // Round up so the monthly shares always add up to the full target
+  const monthlyShare = Math.ceil(missing / monthsLeft);
+  return Math.max(monthlyShare, addedThisMonth);
+}
+
+// The one number at the top: how much can be spent per day for the
+// rest of the month after goals and bills are covered.
+// today is "YYYY-MM-DD"; passing it in (instead of reading the clock)
+// keeps this function pure and testable.
+function safeToSpend(entries, goals, budgets, today) {
+  const month = monthKey(today);
+  const monthEntries = entriesInMonth(entries, month);
+  const leftCents = monthTotals(monthEntries).leftCents;
+
+  const goalsCents = goals.reduce((sum, goal) => sum + goalMoneyThisMonth(goal, today), 0);
+
+  // Bills still expected: the Bills plan minus what's already been paid
+  const billsPaid = monthEntries
+    .filter((entry) => entry.type === "expense" && entry.category === "Bills")
+    .reduce((sum, entry) => sum + entry.amountCents, 0);
+  const billsCents = budgets.Bills ? Math.max(0, budgets.Bills - billsPaid) : 0;
+
+  const year = Number(today.slice(0, 4));
+  const monthNumber = Number(today.slice(5, 7));
+  // Day 0 of the next month is the last day of this month
+  const daysInMonth = new Date(year, monthNumber, 0).getDate();
+  const daysLeft = daysInMonth - Number(today.slice(8, 10)) + 1;
+
+  const availableCents = leftCents - goalsCents - billsCents;
+  const perDayCents = availableCents > 0 ? Math.floor(availableCents / daysLeft) : 0;
+  return {
+    leftCents: leftCents,
+    goalsCents: goalsCents,
+    billsCents: billsCents,
+    availableCents: availableCents,
+    daysLeft: daysLeft,
+    perDayCents: perDayCents,
+  };
+}
+
 // plural(1, "entry", "entries") -> "1 entry"; plural(3, ...) -> "3 entries"
 function plural(count, one, many) {
   return count + " " + (count === 1 ? one : many);
@@ -310,5 +377,8 @@ if (typeof module !== "undefined") {
     goalPercent,
     budgetRows,
     describeBudget,
+    monthsBetween,
+    goalMoneyThisMonth,
+    safeToSpend,
   };
 }

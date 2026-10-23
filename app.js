@@ -85,6 +85,33 @@ function makeElement(tag, className, text) {
   return element;
 }
 
+function renderSafeToSpend() {
+  const today = toDateString(new Date());
+  const safeBox = document.getElementById("safe-box");
+  // Safe to spend is about the days ahead, so it only makes sense for now
+  safeBox.hidden = viewMonth !== monthKey(today);
+  if (safeBox.hidden) {
+    return;
+  }
+  const safe = safeToSpend(data.entries, data.goals, data.budgets, today);
+  document.getElementById("safe-per-day").textContent = formatCents(safe.perDayCents);
+  let detail = formatCents(safe.leftCents) + " left";
+  if (safe.goalsCents > 0) {
+    detail += " − " + formatCents(safe.goalsCents) + " for goals";
+  }
+  if (safe.billsCents > 0) {
+    detail += " − " + formatCents(safe.billsCents) + " for bills";
+  }
+  detail += ", over " + plural(safe.daysLeft, "day", "days");
+  const incomeThisMonth = monthTotals(entriesInMonth(data.entries, monthKey(today))).inCents;
+  if (incomeThisMonth === 0) {
+    detail = "Add this month's income to see what's safe to spend.";
+  } else if (safe.availableCents <= 0) {
+    detail += ". Your plans use what's left this month, and that's okay.";
+  }
+  document.getElementById("safe-detail").textContent = detail;
+}
+
 function renderTotals(entries) {
   const totals = monthTotals(entries);
   document.getElementById("total-in").textContent = formatCents(totals.inCents);
@@ -293,6 +320,7 @@ function renderMonthSwitcher() {
 function render() {
   const entries = entriesInMonth(data.entries, viewMonth);
   renderMonthSwitcher();
+  renderSafeToSpend();
   renderTotals(entries);
   renderCategoryTotals(entries);
   renderComparison(entries);

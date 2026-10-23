@@ -49,7 +49,7 @@ Goal: adding an expense takes under 5 seconds.
   money to it, see a progress bar.
 - [x] **3.2 Monthly budget per category.** Set a limit per category. Show progress in
   neutral colours. Going over shows a calm message, not red alarms.
-- [ ] **3.3 Safe to spend.** One number at the top: money left this month minus
+- [x] **3.3 Safe to spend.** One number at the top: money left this month minus
   money planned for goals and remaining bills, divided by days left. Tested.
 - [ ] **3.4 Budget styles.** Let the user pick: "Simple" (just track) or "50/30/20"
   (needs, wants, savings). Explain the 50/30/20 rule in the app in two sentences.

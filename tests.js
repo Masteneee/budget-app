@@ -194,4 +194,65 @@ assert.strictEqual(logic.describeBudget({ spentCents: 10000, budgetCents: 10000 
 assert.strictEqual(logic.describeBudget({ spentCents: 11200, budgetCents: 10000 }), "$12.00 above your $100.00 plan");
 assert.strictEqual(logic.describeBudget({ spentCents: 300, budgetCents: null }), "");
 
+// monthsBetween
+assert.strictEqual(logic.monthsBetween("2026-10", "2027-01"), 3);
+assert.strictEqual(logic.monthsBetween("2026-10", "2026-10"), 0);
+
+// goalMoneyThisMonth (today is Oct 23, 2026)
+const today = "2026-10-23";
+// $400 needed by Jan 2027, $100 saved before October: $300 over 4 months = $75
+const datedGoal = {
+  targetCents: 40000,
+  targetDate: "2027-01-15",
+  contributions: [{ date: "2026-09-10", amountCents: 10000 }],
+};
+assert.strictEqual(logic.goalMoneyThisMonth(datedGoal, today), 7500);
+// Putting in $20 this month doesn't lower the share; putting in $90 raises it
+datedGoal.contributions.push({ date: "2026-10-05", amountCents: 2000 });
+assert.strictEqual(logic.goalMoneyThisMonth(datedGoal, today), 7500);
+datedGoal.contributions.push({ date: "2026-10-06", amountCents: 7000 });
+assert.strictEqual(logic.goalMoneyThisMonth(datedGoal, today), 9000);
+// No date: only what was actually added this month
+const undatedGoal = { targetCents: 50000, targetDate: null, contributions: [{ date: "2026-10-01", amountCents: 1500 }] };
+assert.strictEqual(logic.goalMoneyThisMonth(undatedGoal, today), 1500);
+// Overdue goal: treated like an undated one
+const overdueGoal = { targetCents: 50000, targetDate: "2026-09-01", contributions: [] };
+assert.strictEqual(logic.goalMoneyThisMonth(overdueGoal, today), 0);
+// Already reached before this month: nothing more is needed
+const doneGoal = { targetCents: 1000, targetDate: "2026-12-01", contributions: [{ date: "2026-08-01", amountCents: 1000 }] };
+assert.strictEqual(logic.goalMoneyThisMonth(doneGoal, today), 0);
+// $100 due in December = 3 months (Oct, Nov, Dec). $33.333... rounds up
+// to $33.34 so the three shares cover the full $100
+const unevenGoal = { targetCents: 10000, targetDate: "2026-12-31", contributions: [] };
+assert.strictEqual(logic.goalMoneyThisMonth(unevenGoal, today), 3334);
+// Due this month: the whole missing amount belongs to this month
+const dueNowGoal = { targetCents: 10000, targetDate: "2026-10-31", contributions: [] };
+assert.strictEqual(logic.goalMoneyThisMonth(dueNowGoal, today), 10000);
+
+// safeToSpend: $900 in, $200 out, $75 goal share, $50 of a $80 Bills plan
+// paid, 9 days left in October (23 to 31)
+const safeEntries = [
+  { type: "income", category: "Job", amountCents: 90000, date: "2026-10-01" },
+  { type: "expense", category: "Food", amountCents: 15000, date: "2026-10-10" },
+  { type: "expense", category: "Bills", amountCents: 5000, date: "2026-10-02" },
+  { type: "expense", category: "Food", amountCents: 99999, date: "2026-09-10" }, // other month
+];
+const safeGoal = { targetCents: 40000, targetDate: "2027-01-15", contributions: [{ date: "2026-09-10", amountCents: 10000 }] };
+assert.deepStrictEqual(logic.safeToSpend(safeEntries, [safeGoal], { Bills: 8000 }, today), {
+  leftCents: 70000,
+  goalsCents: 7500,
+  billsCents: 3000,
+  availableCents: 59500,
+  daysLeft: 9,
+  perDayCents: 6611, // 59500 / 9 = 6611.1, rounded down
+});
+// Nothing logged: zero everywhere, last day of a 30-day month has 1 day left
+assert.deepStrictEqual(logic.safeToSpend([], [], {}, "2026-11-30"), {
+  leftCents: 0, goalsCents: 0, billsCents: 0, availableCents: 0, daysLeft: 1, perDayCents: 0,
+});
+// More planned than available: per day stays at 0, never negative
+assert.strictEqual(logic.safeToSpend(safeEntries, [safeGoal], { Bills: 900000 }, today).perDayCents, 0);
+// February 2028 has 29 days (leap year)
+assert.strictEqual(logic.safeToSpend([], [], {}, "2028-02-01").daysLeft, 29);
+
 console.log("All tests passed");

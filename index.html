@@ -73,6 +73,29 @@
       <p id="month-empty" class="empty">Nothing logged in this month yet.</p>
       <ul id="entry-list" class="entry-list"></ul>
     </section>
+    <section id="goals">
+      <h2>Savings goals</h2>
+      <p id="goals-empty" class="empty">Saving for something? Create a goal and watch it fill up.</p>
+      <ul id="goal-list" class="goal-list"></ul>
+      <!-- <details> opens and closes on its own, no JavaScript needed -->
+      <details id="new-goal">
+        <summary>New goal</summary>
+        <form id="goal-form">
+          <label>Name
+            <input id="goal-name" type="text" placeholder="e.g. New bike" maxlength="40">
+          </label>
+          <label>Target amount
+            <input id="goal-target" type="text" inputmode="decimal" placeholder="e.g. 400" autocomplete="off">
+          </label>
+          <label>Target date (optional)
+            <input id="goal-date" type="date">
+          </label>
+          <button type="submit">Create goal</button>
+          <p id="goal-message" class="message" aria-live="polite"></p>
+        </form>
+      </details>
+    </section>
+
     <section id="settings">
       <h2>Settings</h2>
       <form id="settings-form">

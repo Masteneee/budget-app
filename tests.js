@@ -157,4 +157,21 @@ assert.deepStrictEqual(
   ["Entry 2 is damaged.", "Entry 3 is damaged."]
 );
 
+// formatLongDate
+assert.strictEqual(logic.formatLongDate("2027-03-01"), "Mar 1, 2027");
+
+// goalSavedCents and goalPercent
+const bikeGoal = {
+  targetCents: 40000,
+  contributions: [
+    { date: "2026-09-01", amountCents: 10000 },
+    { date: "2026-10-01", amountCents: 5000 },
+  ],
+};
+assert.strictEqual(logic.goalSavedCents(bikeGoal), 15000);
+assert.strictEqual(logic.goalPercent(bikeGoal), 37); // 37.5 rounds down
+assert.strictEqual(logic.goalPercent({ targetCents: 100, contributions: [] }), 0);
+assert.strictEqual(logic.goalPercent({ targetCents: 100, contributions: [{ amountCents: 99 }] }), 99);
+assert.strictEqual(logic.goalPercent({ targetCents: 100, contributions: [{ amountCents: 250 }] }), 100);
+
 console.log("All tests passed");

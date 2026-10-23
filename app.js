@@ -152,6 +152,96 @@ function renderCategoryTotals(entries) {
   }
 }
 
+function renderGoal(goal) {
+  const saved = goalSavedCents(goal);
+  const percent = goalPercent(goal);
+  const item = makeElement("li", "goal", "");
+
+  const top = makeElement("div", "goal-top", "");
+  top.appendChild(makeElement("span", "goal-name", goal.name));
+  top.appendChild(makeElement("span", "goal-amounts", formatCents(saved) + " of " + formatCents(goal.targetCents)));
+  item.appendChild(top);
+
+  // role and aria-value* let screen readers announce the progress
+  const bar = makeElement("div", "progress", "");
+  bar.setAttribute("role", "progressbar");
+  bar.setAttribute("aria-valuemin", "0");
+  bar.setAttribute("aria-valuemax", "100");
+  bar.setAttribute("aria-valuenow", String(percent));
+  bar.setAttribute("aria-label", goal.name + " progress");
+  const fill = makeElement("div", "progress-fill", "");
+  fill.style.width = percent + "%";
+  bar.appendChild(fill);
+  item.appendChild(bar);
+
+  let status = percent + "%";
+  if (percent === 100) {
+    status = "Goal reached!";
+  } else if (goal.targetDate) {
+    status += " · by " + formatLongDate(goal.targetDate);
+  }
+  item.appendChild(makeElement("p", "goal-status", status));
+
+  const form = makeElement("form", "goal-add", "");
+  const input = document.createElement("input");
+  input.type = "text";
+  input.inputMode = "decimal";
+  input.placeholder = "Amount";
+  input.autocomplete = "off";
+  input.setAttribute("aria-label", "Amount to add to " + goal.name);
+  const addButton = makeElement("button", "", "Add money");
+  addButton.type = "submit";
+  form.appendChild(input);
+  form.appendChild(addButton);
+  const message = makeElement("p", "message", "");
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const amountCents = parseAmountToCents(input.value);
+    if (amountCents === null) {
+      message.textContent = "Type an amount, like 20";
+      return;
+    }
+    goal.contributions.push({ date: toDateString(new Date()), amountCents: amountCents });
+    saveData(data);
+    render();
+  });
+  item.appendChild(form);
+  item.appendChild(message);
+
+  const deleteStart = makeElement("button", "quiet", "Delete goal");
+  deleteStart.type = "button";
+  const confirmBox = makeElement("div", "delete-confirm", "");
+  confirmBox.hidden = true;
+  confirmBox.appendChild(makeElement("p", "", "Delete this goal and its history?"));
+  const confirmButtons = makeElement("div", "dialog-buttons", "");
+  const yes = makeElement("button", "", "Yes, delete");
+  yes.type = "button";
+  const no = makeElement("button", "secondary", "Keep it");
+  no.type = "button";
+  confirmButtons.appendChild(yes);
+  confirmButtons.appendChild(no);
+  confirmBox.appendChild(confirmButtons);
+  deleteStart.addEventListener("click", () => (confirmBox.hidden = false));
+  no.addEventListener("click", () => (confirmBox.hidden = true));
+  yes.addEventListener("click", () => {
+    data.goals = data.goals.filter((g) => g.id !== goal.id);
+    saveData(data);
+    render();
+  });
+  item.appendChild(deleteStart);
+  item.appendChild(confirmBox);
+  return item;
+}
+
+function renderGoals() {
+  const list = document.getElementById("goal-list");
+  list.innerHTML = "";
+  document.getElementById("goals-empty").hidden = data.goals.length > 0;
+  for (const goal of data.goals) {
+    list.appendChild(renderGoal(goal));
+  }
+}
+
 function renderComparison(entries) {
   const previousMonth = shiftMonth(viewMonth, -1);
   const previousEntries = entriesInMonth(data.entries, previousMonth);
@@ -191,6 +281,7 @@ function render() {
   renderCategoryTotals(entries);
   renderComparison(entries);
   renderList(entries);
+  renderGoals();
 }
 
 // Redraws the whole list from data. Simpler than updating one row,
@@ -333,6 +424,39 @@ document.getElementById("settings-form").addEventListener("submit", (event) => {
     settingsMessage.textContent = "Saved: " + formatCents(wageCents) + " per hour";
   }
   saveData(data);
+  render();
+});
+
+document.getElementById("goal-form").addEventListener("submit", (event) => {
+  event.preventDefault();
+  const nameInput = document.getElementById("goal-name");
+  const targetInput = document.getElementById("goal-target");
+  const dateInput = document.getElementById("goal-date");
+  const message = document.getElementById("goal-message");
+  const name = nameInput.value.trim();
+  const targetCents = parseAmountToCents(targetInput.value);
+  if (name === "") {
+    message.textContent = "Give your goal a name";
+    return;
+  }
+  if (targetCents === null) {
+    message.textContent = "Type a target amount, like 400";
+    return;
+  }
+  data.goals.push({
+    id: makeId(),
+    name: name,
+    targetCents: targetCents,
+    // An empty date field gives "", which we store as "no date"
+    targetDate: dateInput.value || null,
+    contributions: [],
+  });
+  saveData(data);
+  nameInput.value = "";
+  targetInput.value = "";
+  dateInput.value = "";
+  message.textContent = "";
+  document.getElementById("new-goal").open = false;
   render();
 });
 

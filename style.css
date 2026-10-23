@@ -368,3 +368,78 @@ button:disabled {
   display: block;
   color: var(--muted);
 }
+
+.goal-list {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+}
+
+.goal {
+  padding: 12px 0;
+  border-bottom: 1px solid #eceae3;
+}
+
+.goal-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.goal-name {
+  font-weight: 600;
+}
+
+.goal-amounts,
+.goal-status {
+  color: var(--muted);
+}
+
+.goal-status {
+  margin: 4px 0 8px;
+  font-size: 0.9rem;
+}
+
+/* The bar is a grey track with a coloured fill whose width is the percent */
+.progress {
+  height: 12px;
+  margin-top: 6px;
+  background: #e8e6df;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.4s ease;
+}
+
+.goal-add {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+
+.goal-add input {
+  margin-bottom: 0;
+}
+
+details summary {
+  cursor: pointer;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+#goal-form label {
+  display: block;
+  color: var(--muted);
+}
+
+.goal .message {
+  margin: 4px 0 0;
+}

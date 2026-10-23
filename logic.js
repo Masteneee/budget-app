@@ -92,6 +92,11 @@ function shiftMonth(month, change) {
   return year + "-" + String(monthNumber).padStart(2, "0");
 }
 
+// "2027-03-01" -> "Mar 1, 2027", for dates that may be in another year
+function formatLongDate(dateString) {
+  return formatShortDate(dateString) + ", " + dateString.slice(0, 4);
+}
+
 // Returns a new array where the entry with this id has the changes
 // applied. We never modify the old array, which keeps bugs local.
 function updateEntry(entries, id, changes) {
@@ -192,6 +197,18 @@ function formatHours(hours) {
   return String(rounded) + " h";
 }
 
+// A goal keeps every contribution with its date (not just a total),
+// so we can later ask "how much went to goals this month?"
+function goalSavedCents(goal) {
+  return goal.contributions.reduce((sum, contribution) => sum + contribution.amountCents, 0);
+}
+
+// 0 to 100, rounded down so a goal only shows 100% once it's truly reached
+function goalPercent(goal) {
+  const percent = Math.floor((goalSavedCents(goal) / goal.targetCents) * 100);
+  return Math.min(percent, 100);
+}
+
 // plural(1, "entry", "entries") -> "1 entry"; plural(3, ...) -> "3 entries"
 function plural(count, one, many) {
   return count + " " + (count === 1 ? one : many);
@@ -252,5 +269,8 @@ if (typeof module !== "undefined") {
     formatHours,
     checkBackup,
     plural,
+    formatLongDate,
+    goalSavedCents,
+    goalPercent,
   };
 }

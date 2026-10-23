@@ -8,6 +8,7 @@ const STORAGE_KEY = "budgetApp";
 function emptyData() {
   return {
     entries: [],
+    goals: [],
     settings: {
       // null means "not set": the hours-of-work feature stays hidden
       hourlyWageCents: null,

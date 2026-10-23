@@ -45,7 +45,7 @@ Goal: adding an expense takes under 5 seconds.
 
 ## Phase 3: Goals without guilt
 
-- [ ] **3.1 Savings goals.** Create a goal (name, target amount, optional date), add
+- [x] **3.1 Savings goals.** Create a goal (name, target amount, optional date), add
   money to it, see a progress bar.
 - [ ] **3.2 Monthly budget per category.** Set a limit per category. Show progress in
   neutral colours. Going over shows a calm message, not red alarms.

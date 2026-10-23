@@ -53,6 +53,13 @@
   would need rules for duplicates. A confirm step shows both entry counts first.
   The backup file wraps the data with `app` and `version` fields, so a random
   JSON file is rejected and future formats can be told apart.
+- **Goals store each contribution with its date, not just a running total
+  (task 3.1).** Task 3.3 needs "how much went to goals this month". Money put
+  in a goal doesn't change "Left this month"; "Safe to spend" (3.3) is where
+  goal money gets subtracted. Goals can receive money but not give it back,
+  to keep this task small.
+- **A goal shows "Goal reached!" at 100% and accepts more money after (task 3.1).**
+  The bar stops at 100%, and the amount shows the real total ("$450.00 of $400.00").
 
 ---
 
@@ -1036,5 +1043,95 @@ second time, because the value didn't change.
    guards the user's data.
 2. `Number.isInteger(12.5)` is false, so that entry is reported as damaged, and the
    message says "Nothing was changed. Entry N is damaged." Their current data is safe.
+
+</details>
+
+---
+
+## Task 3.1: Savings goals (2026-10-23)
+
+### What we built
+
+A "Savings goals" card. Tap "New goal" and a small form opens: name, target
+amount and an optional date. Each goal then shows its name, "$150.00 of
+$400.00", a green progress bar, and "37% · by Mar 1, 2027". Under it, an amount
+box and an "Add money" button put money into the goal. When the saved amount
+reaches the target, the bar is full and the line says "Goal reached!". Each goal
+can be deleted with the same two-step confirm as entries. Goals don't depend on
+the month you're viewing; they're always shown.
+
+### New concepts
+
+**`reduce`.** `array.reduce((sum, item) => sum + item.amountCents, 0)` walks the
+array and carries a running value (`sum`, starting at `0`). It's the same idea as
+the accumulator loop in `monthTotals`, written as one expression.
+
+**Storing events instead of totals.** We store each contribution with its date
+rather than a single "saved" number. The total is computed when needed. This keeps
+history, so we can answer new questions later (like "saved this month?") without
+changing the data format. Banks work the same way: a list of transactions, and
+the balance is derived from them.
+
+**`<details>` and `<summary>`.** A built-in "click to expand" element. The
+`<summary>` is always visible. Clicking it toggles the rest. Setting
+`details.open = false` in code closes it.
+
+**A progress bar from two divs.** A grey "track" div with a green "fill" div
+inside. We set the fill's width to the percent (`fill.style.width = "37%"`).
+`overflow: hidden` and `border-radius` on the track keep the fill's corners
+rounded. `transition: width 0.4s` animates the change when you add money.
+
+**ARIA for custom widgets.** A div doesn't mean anything to a screen reader.
+`role="progressbar"` plus `aria-valuenow="37"` makes it announce "New bike
+progress, 37%". (The native `<progress>` element does this too, but it's hard to
+style the same way in every browser.)
+
+**Closures.** Inside `renderGoal`, each goal's "Add money" handler uses `goal`
+and `input`, variables from the function that created it. Even after
+`renderGoal` has finished, the handler still "remembers" them. That's a
+closure, and it's why each goal's button adds to the right goal.
+
+**`Math.floor` for progress.** Rounding 99.6% up would show "100%" before the goal
+is actually reached. `Math.floor` always rounds down, so 100% only appears when
+it's true. `Math.min(percent, 100)` stops the bar from overflowing past the end.
+
+### Key lines of code
+
+```js
+return goal.contributions.reduce((sum, contribution) => sum + contribution.amountCents, 0);
+```
+The saved amount is never stored; it's always the sum of contributions.
+
+```js
+goal.contributions.push({ date: toDateString(new Date()), amountCents: amountCents });
+```
+Each "Add money" records when and how much.
+
+```js
+fill.style.width = percent + "%";
+```
+CSS from JavaScript: the bar's length is just a width.
+
+```js
+targetDate: dateInput.value || null,
+```
+An empty date field gives `""`; `|| null` stores it as a clear "no date".
+
+### Quiz
+
+1. A goal has a $300 target, and you add $100, then $199.99. What percent shows,
+   and why not 100%?
+2. Why might storing only `savedCents: 29999` (instead of the contributions list)
+   be a problem for task 3.3?
+
+**Answers**
+
+<details>
+<summary>Show answers</summary>
+
+1. 29999 / 30000 = 99.996%, and `Math.floor` gives 99%. Showing 100% would claim
+   the goal is reached when it's 1 cent short.
+2. Task 3.3 needs to know how much went into goals *this month*. A single total
+   can't tell you when the money was added; a dated list can.
 
 </details>

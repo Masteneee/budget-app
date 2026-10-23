@@ -82,6 +82,11 @@
 - **Budget style saves instantly when you tap a choice (task 3.4).** The default
   is "Simple". In 50/30/20 mode, going past the savings target is good, so the
   savings bar never uses the "over" colour.
+- **Rollover carries only unspent money, never overspending, and starts the month
+  you turn it on (task 3.5).** Turning it off and on again restarts from that
+  month. It applies to every budgeted category (Bills included, so "safe to spend"
+  uses the rolled-over Bills amount too). Since budgets have no history, past
+  months are calculated with today's budget amounts.
 
 ---
 
@@ -1398,5 +1403,82 @@ over colour.
 1. Needs $320.00, Wants $192.00, Savings $128.00.
 2. To catch the future mistake of adding a category to `EXPENSE_CATEGORIES`
    without giving it a group. A single check would only prove Food works.
+
+</details>
+
+---
+
+## Task 3.5: Rollover (2026-10-23)
+
+### What we built
+
+A checkbox in Settings: "Roll unspent budget over to next month". When it's on,
+money you didn't use in a category's budget gets added to next month's budget for
+that category. With a $100 Food budget and $60 spent in September, October's Food
+budget becomes $140, and the row says "Includes $40.00 rolled over". Going over
+budget never shrinks next month; overspending just resets the carry to zero. The
+carry starts from the month you turn it on, so switching it on doesn't suddenly
+add up leftovers from months ago.
+
+### New concepts
+
+**A classic `for` loop with a custom step.**
+`for (let m = rolloverStart; m < month; m = shiftMonth(m, 1))` has three parts:
+start value, condition to keep going, and how to move to the next value. Here the
+"counter" is a month like "2026-09", and each step moves one month forward.
+Any value can be a loop counter, not just numbers.
+
+**Carrying state across loop turns.** `carried` holds each category's leftover
+from the previous month. Each turn reads it (to know what was available) and
+then overwrites it (with what's left now). This is how running balances work,
+in bank accounts and in physics simulations alike.
+
+**Storing *when*, not just *whether*.** A plain `rollover: true` would raise the
+question "since when?". Storing `rolloverStart: "2026-10"` answers it, and
+`null` still means "off". One field, two pieces of information.
+
+**Checkboxes.** `<input type="checkbox">` is on/off. `event.target` is the
+element that fired the event, and `event.target.checked` tells us its new state.
+
+**One source of truth, used everywhere.** `effectiveBudgets` is called by both the
+"Where it went" bars and "Safe to spend". If they computed budgets separately,
+they could disagree, and the app would show two different truths.
+
+### Key lines of code
+
+```js
+const available = budgets[category] + (carried[category] || 0);
+carried[category] = Math.max(0, available - (spentByCategory[category] || 0));
+```
+This month's money = budget + what carried in. Next month's carry = what's
+left, but never below zero.
+
+```js
+data.settings.rolloverStart = event.target.checked ? monthKey(toDateString(new Date())) : null;
+```
+On: remember this month. Off: forget.
+
+```js
+if (rolloverStart && rolloverStart < month) {
+```
+Nothing to carry in the start month itself, or when rollover is off.
+
+### Quiz
+
+1. Fun budget $50, rollover on since August. You spend $0 in August, $120 in
+   September. What's October's Fun budget?
+2. Why not count leftovers from every month since you started using the app?
+
+**Answers**
+
+<details>
+<summary>Show answers</summary>
+
+1. August: $50 available, $0 spent, so $50 carries. September: $100 available,
+   $120 spent, so the carry is max(0, −20) = 0. October: $50 + $0 = $50.
+2. Budgets apply to all months, including ones from before you ever set them. If
+   you'd used the app for a year before turning rollover on, a year of "unspent"
+   budget (that you never planned) would suddenly appear. Starting the month you
+   turn it on matches what you'd expect.
 
 </details>

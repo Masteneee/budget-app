@@ -53,7 +53,7 @@ Goal: adding an expense takes under 5 seconds.
   money planned for goals and remaining bills, divided by days left. Tested.
 - [x] **3.4 Budget styles.** Let the user pick: "Simple" (just track) or "50/30/20"
   (needs, wants, savings). Explain the 50/30/20 rule in the app in two sentences.
-- [ ] **3.5 Rollover.** Unspent budget can roll over to next month (on/off setting).
+- [x] **3.5 Rollover.** Unspent budget can roll over to next month (on/off setting).
 
 ## Phase 4: Learn investing (paper trading)
 

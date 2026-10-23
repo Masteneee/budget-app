@@ -16,6 +16,8 @@ function emptyData() {
       hourlyWageCents: null,
       // "simple" (just track) or "503020" (needs, wants, savings)
       budgetStyle: "simple",
+      // The month rollover was turned on, like "2026-10"; null means off
+      rolloverStart: null,
     },
   };
 }

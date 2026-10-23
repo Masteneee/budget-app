@@ -233,6 +233,33 @@ function describeBudget(row) {
   return formatCents(-difference) + " above your " + formatCents(row.budgetCents) + " plan";
 }
 
+// Budgets for a month once rollover is applied.
+// Unspent budget carries to the next month; overspending is never
+// taken back (no guilt). Carrying starts in rolloverStart, the month
+// rollover was turned on (null = off), so old months don't count.
+// Returns { budgets: {Food: 14000}, carried: {Food: 4000} }.
+function effectiveBudgets(entries, budgets, month, rolloverStart) {
+  const carried = {};
+  if (rolloverStart && rolloverStart < month) {
+    // Walk forward one month at a time, from the start up to last month
+    for (let m = rolloverStart; m < month; m = shiftMonth(m, 1)) {
+      const spentByCategory = {};
+      for (const total of totalsByCategory(entriesInMonth(entries, m))) {
+        spentByCategory[total.category] = total.cents;
+      }
+      for (const category of Object.keys(budgets)) {
+        const available = budgets[category] + (carried[category] || 0);
+        carried[category] = Math.max(0, available - (spentByCategory[category] || 0));
+      }
+    }
+  }
+  const result = {};
+  for (const category of Object.keys(budgets)) {
+    result[category] = budgets[category] + (carried[category] || 0);
+  }
+  return { budgets: result, carried: carried };
+}
+
 // A goal keeps every contribution with its date (not just a total),
 // so we can later ask "how much went to goals this month?"
 function goalSavedCents(goal) {
@@ -429,5 +456,6 @@ if (typeof module !== "undefined") {
     safeToSpend,
     CATEGORY_GROUPS,
     fiftyThirtyTwenty,
+    effectiveBudgets,
   };
 }

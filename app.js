@@ -93,7 +93,8 @@ function renderSafeToSpend() {
   if (safeBox.hidden) {
     return;
   }
-  const safe = safeToSpend(data.entries, data.goals, data.budgets, today);
+  const budgets = effectiveBudgets(data.entries, data.budgets, monthKey(today), data.settings.rolloverStart).budgets;
+  const safe = safeToSpend(data.entries, data.goals, budgets, today);
   document.getElementById("safe-per-day").textContent = formatCents(safe.perDayCents);
   let detail = formatCents(safe.leftCents) + " left";
   if (safe.goalsCents > 0) {
@@ -163,7 +164,8 @@ function renderChart(totals) {
 function renderCategoryTotals(entries) {
   const list = document.getElementById("category-list");
   renderChart(totalsByCategory(entries));
-  const rows = budgetRows(entries, data.budgets);
+  const rollover = effectiveBudgets(data.entries, data.budgets, viewMonth, data.settings.rolloverStart);
+  const rows = budgetRows(entries, rollover.budgets);
   list.innerHTML = "";
   document.getElementById("category-empty").hidden = rows.length > 0;
   for (const budgetRow of rows) {
@@ -190,6 +192,10 @@ function renderCategoryTotals(entries) {
       bar.appendChild(fill);
       item.appendChild(bar);
       item.appendChild(makeElement("p", "budget-text", describeBudget(budgetRow)));
+      const carriedCents = rollover.carried[budgetRow.category] || 0;
+      if (carriedCents > 0) {
+        item.appendChild(makeElement("p", "budget-text", "Includes " + formatCents(carriedCents) + " rolled over"));
+      }
     }
     list.appendChild(item);
   }
@@ -491,7 +497,15 @@ function fillSettingsForm() {
   for (const radio of document.querySelectorAll('input[name="budget-style"]')) {
     radio.checked = radio.value === data.settings.budgetStyle;
   }
+  document.getElementById("rollover").checked = data.settings.rolloverStart !== null;
 }
+
+document.getElementById("rollover").addEventListener("change", (event) => {
+  // Remember when it was turned on, so only months from now on carry over
+  data.settings.rolloverStart = event.target.checked ? monthKey(toDateString(new Date())) : null;
+  saveData(data);
+  render();
+});
 
 // The style is saved as soon as it's chosen, no Save button needed
 for (const radio of document.querySelectorAll('input[name="budget-style"]')) {

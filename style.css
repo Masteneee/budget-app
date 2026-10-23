@@ -526,10 +526,15 @@ details summary {
   cursor: pointer;
 }
 
-.radio input {
+.radio input,
+#settings .radio input {
   width: 22px;
   min-height: 22px;
   height: 22px;
   margin: 0;
   accent-color: var(--accent);
+}
+
+#settings > .radio {
+  color: var(--text);
 }

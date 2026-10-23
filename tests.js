@@ -282,4 +282,27 @@ for (const category of logic.EXPENSE_CATEGORIES) {
   assert.ok(logic.CATEGORY_GROUPS[category], category + " has no 50/30/20 group");
 }
 
+// effectiveBudgets: Food $100/month, Fun $50/month, rollover since August
+const rollEntries = [
+  { type: "expense", category: "Food", amountCents: 6000, date: "2026-08-10" }, // $40 Food left
+  { type: "expense", category: "Food", amountCents: 15000, date: "2026-09-10" }, // $140 available, $10 over
+  { type: "expense", category: "Fun", amountCents: 2000, date: "2026-09-12" }, // $100 available, $80 left
+  { type: "expense", category: "Food", amountCents: 99999, date: "2026-07-01" }, // before rollover started
+];
+const baseBudgets = { Food: 10000, Fun: 5000 };
+assert.deepStrictEqual(logic.effectiveBudgets(rollEntries, baseBudgets, "2026-10", "2026-08"), {
+  budgets: { Food: 10000, Fun: 13000 },
+  carried: { Food: 0, Fun: 8000 },
+});
+// September: only August counts so far
+assert.deepStrictEqual(logic.effectiveBudgets(rollEntries, baseBudgets, "2026-09", "2026-08").budgets, {
+  Food: 14000,
+  Fun: 10000,
+});
+// The month rollover starts gets nothing extra yet, and "off" means plain budgets
+assert.deepStrictEqual(logic.effectiveBudgets(rollEntries, baseBudgets, "2026-08", "2026-08").budgets, baseBudgets);
+assert.deepStrictEqual(logic.effectiveBudgets(rollEntries, baseBudgets, "2026-10", null).budgets, baseBudgets);
+// Works across a year boundary
+assert.strictEqual(logic.effectiveBudgets([], { Fun: 5000 }, "2027-02", "2026-12").budgets.Fun, 15000);
+
 console.log("All tests passed");

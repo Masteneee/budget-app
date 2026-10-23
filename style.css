@@ -1,0 +1,364 @@
+/* Colours live in one place so changing the look later is a one-line edit */
+:root {
+  --background: #f7f6f2;
+  --surface: #ffffff;
+  --text: #2b2b2b;
+  --muted: #6b6b6b;
+  --accent: #3a7d6b;
+}
+
+/* Padding and border count inside an element's width, so width: 100%
+   never overflows the screen */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  /* Use the phone's full width; never allow sideways scrolling */
+  overflow-x: hidden;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--background);
+  color: var(--text);
+  line-height: 1.5;
+}
+
+header {
+  background: var(--accent);
+  color: #ffffff;
+  padding: 16px;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+main {
+  /* Keeps lines readable on wide screens; phones just use the full width */
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+section {
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+section h2 {
+  margin-top: 0;
+}
+
+.empty {
+  color: var(--muted);
+}
+
+main > * + * {
+  margin-top: 16px;
+}
+
+input,
+select {
+  font: inherit;
+  /* iPhones zoom into any input with text smaller than 16px */
+  font-size: max(16px, 1em);
+  width: 100%;
+  min-height: 48px;
+  padding: 10px;
+  margin-bottom: 8px;
+  border: 1px solid #d6d4cc;
+  border-radius: 8px;
+}
+
+/* The amount is the first and most important thing to type */
+.amount-input {
+  font-size: 2rem;
+  font-weight: 600;
+}
+
+.date-label {
+  display: block;
+  color: var(--muted);
+}
+
+.hint {
+  color: var(--muted);
+  margin: 8px 0 4px;
+}
+
+.category-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+button {
+  font: inherit;
+  /* 48px is the smallest size a thumb can hit reliably */
+  min-height: 48px;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #ffffff;
+  cursor: pointer;
+  /* Removes the double-tap-to-zoom delay on buttons */
+  touch-action: manipulation;
+}
+
+/* A clear outline for keyboard users, but not on every finger tap */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.message {
+  min-height: 1.5em;
+  color: var(--accent);
+}
+
+.entry-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.entry {
+  min-height: 56px;
+}
+
+.entry-list li {
+  border-bottom: 1px solid #eceae3;
+}
+
+.entry-list li:last-child {
+  border-bottom: none;
+}
+
+/* Each row is a button so it can be tapped; this removes the
+   default button look so it reads like a list row */
+.entry {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 0;
+  background: none;
+  color: inherit;
+  text-align: left;
+  border-radius: 0;
+}
+
+.entry-details {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Category on top, note below it in grey */
+.entry-details,
+.entry-right {
+  display: flex;
+  flex-direction: column;
+}
+
+.entry-right {
+  align-items: flex-end;
+}
+
+.entry-category,
+.entry-amount {
+  font-weight: 600;
+}
+
+.entry-note,
+.entry-date {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+dialog {
+  width: min(400px, calc(100% - 32px));
+  border: none;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+/* The dimmed layer behind an open dialog */
+dialog::backdrop {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+dialog h2 {
+  margin-top: 0;
+}
+
+dialog label {
+  display: block;
+  color: var(--muted);
+}
+
+.dialog-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+button.secondary {
+  background: #e8e6df;
+  color: var(--text);
+}
+
+/* Delete is available but doesn't shout */
+button.quiet {
+  background: none;
+  color: var(--muted);
+  text-decoration: underline;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.delete-confirm p {
+  margin-bottom: 8px;
+}
+
+.summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 16px;
+}
+
+.summary div {
+  display: flex;
+  flex-direction: column;
+}
+
+/* "Left this month" is the number that matters most, so it spans
+   the full width and is bigger */
+.summary-main {
+  grid-column: 1 / -1;
+}
+
+.summary-label {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.summary-value {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.summary-main .summary-value {
+  font-size: 2rem;
+  color: var(--accent);
+}
+
+.type-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  margin-bottom: 12px;
+  padding: 4px;
+  background: #e8e6df;
+  border-radius: 10px;
+}
+
+.type-toggle button {
+  background: none;
+  color: var(--text);
+}
+
+/* The chosen option looks like a raised tab */
+.type-toggle button[aria-pressed="true"] {
+  background: var(--surface);
+  font-weight: 600;
+}
+
+.entry.income .entry-amount {
+  color: var(--accent);
+}
+
+.category-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.category-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+}
+
+.chart-wrap {
+  max-width: 220px;
+  margin: 0 auto 12px;
+}
+
+.category-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.category-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.category-amount {
+  font-weight: 600;
+}
+
+/* Very narrow phones (like an iPhone SE in some modes): 2 columns of
+   category buttons so labels like "Transport" don't get squeezed */
+@media (max-width: 340px) {
+  .category-buttons {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  main {
+    padding: 12px;
+  }
+
+  .summary-main .summary-value {
+    font-size: 1.75rem;
+  }
+}
+
+.month-switcher {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.month-switcher button {
+  min-width: 48px;
+}
+
+.month-label {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.compare-list {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.compare-list li {
+  padding: 4px 0;
+}

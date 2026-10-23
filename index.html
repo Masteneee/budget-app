@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <!-- Without this line, phones zoom out and show a tiny desktop-sized page -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Budget App</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Budget App</h1>
+  </header>
+
+  <main>
+    <nav class="month-switcher" aria-label="Choose a month">
+      <button type="button" id="month-prev" class="secondary" aria-label="Previous month">&#9664;</button>
+      <span id="month-label" class="month-label"></span>
+      <button type="button" id="month-next" class="secondary" aria-label="Next month">&#9654;</button>
+    </nav>
+
+    <section id="summary" class="summary">
+      <div id="safe-box" class="safe-box">
+        <span class="summary-label">Safe to spend</span>
+        <span class="safe-value"><span id="safe-per-day">$0.00</span> <span class="safe-unit">/ day</span></span>
+        <span id="safe-detail" class="safe-detail"></span>
+      </div>
+      <div>
+        <span class="summary-label">Money in</span>
+        <span id="total-in" class="summary-value">$0.00</span>
+      </div>
+      <div>
+        <span class="summary-label">Money out</span>
+        <span id="total-out" class="summary-value">$0.00</span>
+      </div>
+      <div class="summary-main">
+        <span id="left-label" class="summary-label">Left this month</span>
+        <span id="total-left" class="summary-value">$0.00</span>
+      </div>
+    </section>
+
+    <section id="add-expense">
+      <!-- aria-pressed tells screen readers which of the two is chosen -->
+      <div class="type-toggle">
+        <button type="button" id="type-expense" aria-pressed="true">Expense</button>
+        <button type="button" id="type-income" aria-pressed="false">Income</button>
+      </div>
+      <!-- inputmode="decimal" shows the number keypad on phones -->
+      <input id="amount" class="amount-input" type="text" inputmode="decimal"
+             placeholder="0.00" aria-label="Amount in dollars" autocomplete="off">
+      <input id="note" type="text" placeholder="Note (optional)" aria-label="Note">
+      <label class="date-label">Date
+        <input id="date" type="date">
+      </label>
+      <p class="hint">Tap a category to save</p>
+      <div id="category-buttons" class="category-buttons"></div>
+      <p id="add-message" class="message" aria-live="polite"></p>
+    </section>
+
+    <section id="rule-card" hidden>
+      <h2>50/30/20 this month</h2>
+      <p id="rule-empty" class="empty">Add this month's income to see your 50/30/20 split.</p>
+      <ul id="rule-list" class="rule-list"></ul>
+    </section>
+
+    <section id="by-category">
+      <h2>Where it went</h2>
+      <p id="category-empty" class="empty">Your spending by category will show up here.</p>
+      <!-- Chart.js draws on a <canvas>: a blank rectangle you paint with code -->
+      <div id="chart-wrap" class="chart-wrap" hidden>
+        <canvas id="category-chart" aria-label="Spending by category chart" role="img"></canvas>
+      </div>
+      <ul id="category-list" class="category-list"></ul>
+    </section>
+
+    <section id="compare">
+      <h2>Compared with last month</h2>
+      <p id="compare-empty" class="empty"></p>
+      <ul id="compare-list" class="compare-list"></ul>
+    </section>
+
+    <section id="this-month">
+      <h2 id="list-title">This month</h2>
+      <p id="month-empty" class="empty">Nothing logged in this month yet.</p>
+      <ul id="entry-list" class="entry-list"></ul>
+    </section>
+    <section id="goals">
+      <h2>Savings goals</h2>
+      <p id="goals-empty" class="empty">Saving for something? Create a goal and watch it fill up.</p>
+      <ul id="goal-list" class="goal-list"></ul>
+      <!-- <details> opens and closes on its own, no JavaScript needed -->
+      <details id="new-goal">
+        <summary>New goal</summary>
+        <form id="goal-form">
+          <label>Name
+            <input id="goal-name" type="text" placeholder="e.g. New bike" maxlength="40">
+          </label>
+          <label>Target amount
+            <input id="goal-target" type="text" inputmode="decimal" placeholder="e.g. 400" autocomplete="off">
+          </label>
+          <label>Target date (optional)
+            <input id="goal-date" type="date">
+          </label>
+          <button type="submit">Create goal</button>
+          <p id="goal-message" class="message" aria-live="polite"></p>
+        </form>
+      </details>
+    </section>
+
+    <section id="budgets">
+      <h2>Monthly budgets</h2>
+      <p class="hint">Set a plan for any category. Leave a box empty for no plan.</p>
+      <form id="budget-form">
+        <div id="budget-inputs" class="budget-inputs"></div>
+        <button type="submit">Save budgets</button>
+        <p id="budget-message" class="message" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <section id="settings">
+      <h2>Settings</h2>
+      <!-- A fieldset groups related radio buttons; legend is its title.
+           Radios with the same name: choosing one unchooses the others. -->
+      <fieldset class="style-choice">
+        <legend>Budget style</legend>
+        <label class="radio">
+          <input type="radio" name="budget-style" value="simple"> Simple: just track
+        </label>
+        <label class="radio">
+          <input type="radio" name="budget-style" value="503020"> 50/30/20
+        </label>
+        <p class="hint">The 50/30/20 rule splits your income into three parts: about 50%
+          for needs (food, transport, school, bills), 30% for wants (fun and other),
+          and 20% for savings. It's a starting point, not a strict law, so adjust it to fit your life.</p>
+      </fieldset>
+      <form id="settings-form">
+        <label>Hourly wage (after tax, if you know it)
+          <input id="wage" type="text" inputmode="decimal" placeholder="e.g. 16.10" autocomplete="off">
+        </label>
+        <p class="hint">When set, each expense also shows how many hours of work it cost. Leave empty to turn it off.</p>
+        <button type="submit">Save settings</button>
+        <p id="settings-message" class="message" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <section id="backup">
+      <h2>Backup</h2>
+      <p class="hint">Your data lives only in this browser. Download a backup now and then,
+        so clearing the browser or switching phones doesn't lose it.</p>
+      <div class="dialog-buttons">
+        <button type="button" id="export-button">Download backup</button>
+        <button type="button" id="import-button" class="secondary">Load backup</button>
+      </div>
+      <!-- The real file picker looks different in every browser, so it's
+           hidden and the "Load backup" button opens it -->
+      <input id="import-file" type="file" accept=".json,application/json" hidden>
+      <p id="backup-message" class="message" aria-live="polite"></p>
+      <div id="import-confirm" class="delete-confirm" hidden>
+        <p id="import-question"></p>
+        <div class="dialog-buttons">
+          <button type="button" id="import-yes">Yes, replace</button>
+          <button type="button" id="import-no" class="secondary">Cancel</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- A <dialog> is a built-in popup. It stays hidden until JavaScript
+       calls showModal(), which also dims and blocks the page behind it. -->
+  <dialog id="edit-dialog">
+    <form id="edit-form">
+      <h2>Edit</h2>
+      <label>Amount
+        <input id="edit-amount" type="text" inputmode="decimal" autocomplete="off">
+      </label>
+      <label>Category
+        <select id="edit-category"></select>
+      </label>
+      <label>Note
+        <input id="edit-note" type="text">
+      </label>
+      <label>Date
+        <input id="edit-date" type="date">
+      </label>
+      <p id="edit-message" class="message" aria-live="polite"></p>
+      <div class="dialog-buttons">
+        <button type="submit">Save</button>
+        <button type="button" id="edit-cancel" class="secondary">Cancel</button>
+      </div>
+      <button type="button" id="delete-start" class="quiet">Delete this entry</button>
+      <div id="delete-confirm" class="delete-confirm" hidden>
+        <p>Delete it for good?</p>
+        <div class="dialog-buttons">
+          <button type="button" id="delete-yes">Yes, delete</button>
+          <button type="button" id="delete-no" class="secondary">Keep it</button>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Order matters: app.js uses functions from logic.js and storage.js,
+       so those must load first. Scripts at the end of <body> run after
+       the HTML above exists, so app.js can find the elements. -->
+  <!-- Chart.js comes from a CDN. The pinned version (4.4.1) means it can't
+       change under us, and "integrity" makes the browser refuse the file if
+       even one byte differs from the version we checked. If it fails to load
+       (offline, blocked), the app still works without the chart. -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"
+          integrity="sha384-dug+JxfBvklEQdJ4AYuBBAIScUz0bVN73xpy273gcAwHjb3qI0fXmuYNaNfdyYJG"
+          crossorigin="anonymous"></script>
+  <script src="logic.js"></script>
+  <script src="storage.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

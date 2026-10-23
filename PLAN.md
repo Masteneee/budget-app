@@ -21,7 +21,7 @@ Goal: adding an expense takes under 5 seconds.
 - [x] **1.1 Add an expense.** A form: amount (big, first, focused on load), category
   buttons (Food, Transport, Fun, School, Bills, Other), optional note. Date defaults
   to today. Saved to localStorage through storage.js. Amount stored in cents.
-- [ ] **1.2 Show the list.** This month's entries, newest first, with category, note,
+- [x] **1.2 Show the list.** This month's entries, newest first, with category, note,
   amount and date. Shows a friendly message when the list is empty.
 - [ ] **1.3 Edit and delete.** Tap an entry to edit it or delete it, with a confirm
   step before deleting.

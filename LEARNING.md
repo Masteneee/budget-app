@@ -17,6 +17,8 @@
   $12.50, because French keyboards in Quebec often use a comma.
 - **Amounts allow at most 2 decimals and must be above zero (task 1.1).** "1.234"
   is rejected instead of being rounded silently.
+- **"This month" means the calendar month on your device (task 1.2).** Entries from
+  earlier months are kept, just not shown. The month switcher comes in task 2.2.
 
 ---
 
@@ -233,5 +235,96 @@ JavaScript counts months from 0 (January is 0), so we add 1. `padStart` turns
 2. After tapping a category, the focus would stay on the button. They'd have to
    tap the amount box again before typing each new expense. That's one extra tap
    per expense, which works against the "under 5 seconds" goal.
+
+</details>
+
+---
+
+## Task 1.2: Show the list (2026-10-23)
+
+### What we built
+
+Under the form, the "This month" card now lists every expense from the current
+month. Each row shows the category in bold, the note in grey below it, and the
+amount and date on the right. The newest expense is on top. If two expenses
+have the same date, the one you added last comes first. When the month has no
+expenses, a friendly line invites you to add the first one. The list redraws
+right after each save, so the new expense appears instantly.
+
+### New concepts
+
+**filter.** `array.filter(fn)` builds a new array with only the items where
+`fn` returns true. `entries.filter((entry) => monthKey(entry.date) === month)`
+keeps this month's entries.
+
+**sort with a compare function.** `array.sort((a, b) => ...)` puts `a` first if
+the function returns a negative number and `b` first if it's positive.
+`b.date.localeCompare(a.date)` is positive when `b` is a later date, so later
+dates go first.
+
+**Why `[...entries]`.** `sort` and `reverse` change the array they're called on.
+`[...entries]` (the "spread" syntax) makes a copy first, so the original data
+stays in the order it was saved. Changing data you didn't create is a classic
+source of hard-to-find bugs.
+
+**Stable sort.** When two items compare as equal, a stable sort keeps them in
+their existing order. JavaScript's sort has been stable since 2019. That's why
+reversing first works: entries saved later are now earlier in the copy, and the
+sort keeps them ahead on ties.
+
+**createElement vs innerHTML.** You can build HTML from a text string with
+`innerHTML`, but if a note contained `<img src=x onerror=...>`, the browser
+would run it. That's a "cross-site scripting" (XSS) bug. `textContent` always
+treats text as plain text. We only use `innerHTML = ""` to empty the list.
+
+**`hidden`.** Setting `element.hidden = true` hides it, the same as
+`display: none` in CSS.
+
+**Flexbox.** `display: flex` lays children out in a row. `justify-content:
+space-between` pushes the first child to the left edge and the last to the
+right. `flex-direction: column` stacks them vertically instead.
+
+### Key lines of code
+
+```js
+return [...entries].reverse().sort((a, b) => b.date.localeCompare(a.date));
+```
+Copy, then reverse (so the latest added comes first), then sort by date with the
+newest first. Three steps on one line, read left to right.
+
+```js
+const thisMonth = monthKey(toDateString(new Date()));
+```
+Today becomes "2026-10-23", which becomes "2026-10". That's the month we show.
+
+```js
+monthEmpty.hidden = entries.length > 0;
+```
+A comparison is already true or false, so we can assign it directly instead of
+writing an if/else.
+
+```js
+// new Date("2026-10-23") is treated as UTC midnight
+```
+A real trap: in Montreal (UTC-4), UTC midnight is 8 pm the day before. If we
+used `new Date(dateString).getDate()`, every expense would show yesterday's
+date. Reading the numbers straight from the text avoids it.
+
+### Quiz
+
+1. You add a $5 expense dated Oct 10, then a $7 expense dated Oct 12, then a $3
+   expense dated Oct 10. In what order does the list show them?
+2. Why is it dangerous to put a user's note into the page with `innerHTML`?
+
+**Answers**
+
+<details>
+<summary>Show answers</summary>
+
+1. $7 (Oct 12), then $3 (Oct 10, added last), then $5 (Oct 10). Newest date
+   first, and on a tie the later-added one first.
+2. `innerHTML` treats the text as HTML, so a note containing a tag (like an
+   `<img>` with an `onerror` script) would be run by the browser. With
+   `textContent`, it's just shown as letters.
 
 </details>

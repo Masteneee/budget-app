@@ -8,6 +8,8 @@ const noteInput = document.getElementById("note");
 const dateInput = document.getElementById("date");
 const categoryButtons = document.getElementById("category-buttons");
 const addMessage = document.getElementById("add-message");
+const entryList = document.getElementById("entry-list");
+const monthEmpty = document.getElementById("month-empty");
 
 // Good enough to be unique for one person's data: time + random letters
 function makeId() {
@@ -31,6 +33,7 @@ function addExpense(category) {
     date: dateInput.value || toDateString(new Date()),
   });
   saveData(data);
+  renderList();
 
   addMessage.textContent = "Saved " + formatCents(amountCents) + " in " + category;
   // Clear the form so the next expense can be typed right away
@@ -38,6 +41,41 @@ function addExpense(category) {
   noteInput.value = "";
   dateInput.value = toDateString(new Date());
   amountInput.focus();
+}
+
+// Builds a small element with a class and text. textContent (not
+// innerHTML) means a note like "<b>" is shown as text, never run as HTML.
+function makeElement(tag, className, text) {
+  const element = document.createElement(tag);
+  element.className = className;
+  element.textContent = text;
+  return element;
+}
+
+// Redraws the whole list from data. Simpler than updating one row,
+// and fast enough for a few hundred entries.
+function renderList() {
+  const thisMonth = monthKey(toDateString(new Date()));
+  const entries = sortNewestFirst(entriesInMonth(data.entries, thisMonth));
+
+  entryList.innerHTML = "";
+  monthEmpty.hidden = entries.length > 0;
+
+  for (const entry of entries) {
+    const row = document.createElement("li");
+    row.className = "entry";
+    const details = makeElement("div", "entry-details", "");
+    details.appendChild(makeElement("span", "entry-category", entry.category));
+    if (entry.note) {
+      details.appendChild(makeElement("span", "entry-note", entry.note));
+    }
+    row.appendChild(details);
+    const right = makeElement("div", "entry-right", "");
+    right.appendChild(makeElement("span", "entry-amount", formatCents(entry.amountCents)));
+    right.appendChild(makeElement("span", "entry-date", formatShortDate(entry.date)));
+    row.appendChild(right);
+    entryList.appendChild(row);
+  }
 }
 
 // One button per category; tapping it saves, so logging is one tap
@@ -50,4 +88,5 @@ for (const category of EXPENSE_CATEGORIES) {
 }
 
 dateInput.value = toDateString(new Date());
+renderList();
 amountInput.focus();

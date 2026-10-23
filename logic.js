@@ -39,9 +39,47 @@ function toDateString(date) {
   return year + "-" + month + "-" + day;
 }
 
+// "2026-10-23" -> "2026-10". Text comparison works because the
+// format always has the same length and puts the year first.
+function monthKey(dateString) {
+  return dateString.slice(0, 7);
+}
+
+function entriesInMonth(entries, month) {
+  return entries.filter((entry) => monthKey(entry.date) === month);
+}
+
+// Newest date first. Entries are saved in the order they were added,
+// so reversing first puts the latest one on top when dates are equal
+// (sort keeps the existing order for ties).
+function sortNewestFirst(entries) {
+  return [...entries].reverse().sort((a, b) => b.date.localeCompare(a.date));
+}
+
+const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+// "2026-10-23" -> "Oct 23". We read the numbers ourselves because
+// new Date("2026-10-23") is treated as UTC midnight, which is still
+// Oct 22 in Montreal.
+function formatShortDate(dateString) {
+  const month = Number(dateString.slice(5, 7));
+  const day = Number(dateString.slice(8, 10));
+  return MONTH_NAMES[month - 1] + " " + day;
+}
+
 // In the browser, functions above are already global. Node has no
 // globals between files, so tests.js needs them handed over here.
 // `module` only exists in Node, which is why we check first.
 if (typeof module !== "undefined") {
-  module.exports = { EXPENSE_CATEGORIES, formatCents, parseAmountToCents, toDateString };
+  module.exports = {
+    EXPENSE_CATEGORIES,
+    formatCents,
+    parseAmountToCents,
+    toDateString,
+    monthKey,
+    entriesInMonth,
+    sortNewestFirst,
+    formatShortDate,
+  };
 }

@@ -23,4 +23,24 @@ assert.strictEqual(logic.parseAmountToCents("1.234"), null);
 assert.strictEqual(logic.toDateString(new Date(2026, 0, 5)), "2026-01-05");
 assert.strictEqual(logic.toDateString(new Date(2026, 9, 23, 23, 30)), "2026-10-23");
 
+// monthKey and entriesInMonth
+assert.strictEqual(logic.monthKey("2026-10-23"), "2026-10");
+const sample = [
+  { id: "a", date: "2026-10-01" },
+  { id: "b", date: "2026-09-30" },
+  { id: "c", date: "2026-10-15" },
+  { id: "d", date: "2026-10-15" },
+];
+assert.deepStrictEqual(logic.entriesInMonth(sample, "2026-10").map((e) => e.id), ["a", "c", "d"]);
+assert.deepStrictEqual(logic.entriesInMonth([], "2026-10"), []);
+
+// sortNewestFirst: newest date first, and the later-added entry first on ties
+assert.deepStrictEqual(logic.sortNewestFirst(sample).map((e) => e.id), ["d", "c", "a", "b"]);
+// It must not change the original array
+assert.strictEqual(sample[0].id, "a");
+
+// formatShortDate
+assert.strictEqual(logic.formatShortDate("2026-10-23"), "Oct 23");
+assert.strictEqual(logic.formatShortDate("2026-01-05"), "Jan 5");
+
 console.log("All tests passed");

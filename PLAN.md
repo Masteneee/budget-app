@@ -40,7 +40,7 @@ Goal: adding an expense takes under 5 seconds.
   last month per category ("Food: $40 less than last month").
 - [x] **2.3 Hours of work.** A settings field for hourly wage. When set, each expense
   also shows how many hours of work it cost (e.g. "1.5 h"). Tested in logic.js.
-- [ ] **2.4 Export and import.** Download all data as a JSON file and load it back,
+- [x] **2.4 Export and import.** Download all data as a JSON file and load it back,
   so data isn't lost if the browser is cleared.
 
 ## Phase 3: Goals without guilt

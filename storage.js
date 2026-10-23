@@ -15,6 +15,14 @@ function emptyData() {
   };
 }
 
+// Fills in defaults for anything missing, for old saves and imported backups.
+// Settings is merged on its own so a new setting gets its default too.
+function withDefaults(saved) {
+  const data = Object.assign(emptyData(), saved);
+  data.settings = Object.assign(emptyData().settings, data.settings);
+  return data;
+}
+
 function loadData() {
   let saved = null;
   try {
@@ -24,13 +32,16 @@ function loadData() {
     // Broken or blocked storage: start fresh instead of crashing the page
     console.warn("Could not read saved data", error);
   }
-  // Fields missing from older saves get their default value.
-  // Settings is merged on its own so a new setting gets its default too.
-  const data = Object.assign(emptyData(), saved);
-  data.settings = Object.assign(emptyData().settings, data.settings);
-  return data;
+  return withDefaults(saved);
 }
 
 function saveData(data) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+// Swaps all saved data for a backup's data and returns the new data
+function replaceData(newData) {
+  const data = withDefaults(newData);
+  saveData(data);
+  return data;
 }

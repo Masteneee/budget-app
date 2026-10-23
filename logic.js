@@ -192,6 +192,39 @@ function formatHours(hours) {
   return String(rounded) + " h";
 }
 
+// plural(1, "entry", "entries") -> "1 entry"; plural(3, ...) -> "3 entries"
+function plural(count, one, many) {
+  return count + " " + (count === 1 ? one : many);
+}
+
+// Checks that something read from a backup file looks like our data
+// before we let it replace everything. Returns a list of problems;
+// an empty list means the backup is fine.
+function checkBackup(backup) {
+  if (!backup || typeof backup !== "object" || backup.app !== "budget-app") {
+    return ["This file isn't a Budget App backup."];
+  }
+  if (!backup.data || !Array.isArray(backup.data.entries)) {
+    return ["The backup has no list of entries."];
+  }
+  const problems = [];
+  backup.data.entries.forEach((entry, index) => {
+    const ok =
+      entry &&
+      typeof entry.id === "string" &&
+      (entry.type === "expense" || entry.type === "income") &&
+      Number.isInteger(entry.amountCents) &&
+      entry.amountCents > 0 &&
+      typeof entry.category === "string" &&
+      typeof entry.note === "string" &&
+      /^\d{4}-\d{2}-\d{2}$/.test(entry.date);
+    if (!ok) {
+      problems.push("Entry " + (index + 1) + " is damaged.");
+    }
+  });
+  return problems;
+}
+
 // In the browser, functions above are already global. Node has no
 // globals between files, so tests.js needs them handed over here.
 // `module` only exists in Node, which is why we check first.
@@ -217,5 +250,7 @@ if (typeof module !== "undefined") {
     describeChange,
     hoursOfWork,
     formatHours,
+    checkBackup,
+    plural,
   };
 }

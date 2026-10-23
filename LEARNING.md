@@ -49,6 +49,10 @@
   that's what you actually take home, but any number works.
 - **Settings live in a "Settings" card at the bottom of the page (task 2.3).**
   An empty wage turns the feature off.
+- **Loading a backup replaces all data instead of merging (task 2.4).** Merging
+  would need rules for duplicates. A confirm step shows both entry counts first.
+  The backup file wraps the data with `app` and `version` fields, so a random
+  JSON file is rejected and future formats can be told apart.
 
 ---
 
@@ -937,5 +941,100 @@ returns `null`).
 2. Data saved before this task has no `settings` field. Without the merge,
    reading `data.settings.hourlyWageCents` would crash for every existing user.
    With it, they get the default (`null`, feature off).
+
+</details>
+
+---
+
+## Task 2.4: Export and import (2026-10-23)
+
+### What we built
+
+A Backup card at the bottom of the page has two buttons. "Download backup" saves
+a file like `budget-backup-2026-10-23.json` with all your entries and settings.
+"Load backup" opens a file picker. The app checks the chosen file before using
+it: a file that isn't JSON, isn't one of our backups, or has damaged entries is
+refused with "Nothing was changed". A good backup asks "This backup has 2
+entries. Replace your current 1 entry with it?" Only "Yes, replace" swaps the
+data. Your data now survives clearing the browser or switching devices, as long
+as you keep the file.
+
+### New concepts
+
+**Blob and object URL.** A Blob is a chunk of file contents held in memory.
+`URL.createObjectURL(blob)` gives it a temporary address. We point a hidden
+`<a download="name.json">` link at that address and "click" it in code, and the
+browser saves it as a file. No server involved. `revokeObjectURL` frees the memory.
+
+**`JSON.stringify(backup, null, 2)`.** The `2` adds indentation, so the backup
+file is readable by humans if you open it in a text editor.
+
+**Reading a file: `async` / `await`.** Reading a file takes time. `await
+file.text()` pauses *this function* until the text is ready, while the rest of
+the page keeps working. A function that uses `await` must be marked `async`.
+
+**Never trust input.** A backup file could be anything: an old format, a
+different app's file, or hand-edited and broken. `checkBackup` (in logic.js, so
+it's tested) checks every entry before we let it replace real data. "Validate at
+the boundary" (wherever data enters your app) is a core habit for safe code.
+
+**`Array.isArray` and `Number.isInteger`.** `typeof []` is "object", which is
+useless for spotting arrays, so we ask `Array.isArray`. `Number.isInteger(12.5)`
+is false, which catches amounts that aren't whole cents.
+
+**`forEach` with an index.** `array.forEach((item, index) => ...)` runs a function
+for each item and also gives its position, so the message can say "Entry 2 is damaged".
+
+**Hidden file input + `click()`.** The real `<input type="file">` looks different
+in every browser and is hard to style. We hide it and have a normal button call
+`importFile.click()`, which opens the same file picker.
+
+**Versioning the file format.** `version: 1` costs nothing today. If a future
+task changes the format, the import code can see a version-1 file and convert it.
+
+### Key lines of code
+
+```js
+const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+const link = document.createElement("a");
+link.href = URL.createObjectURL(blob);
+link.download = "budget-backup-" + toDateString(new Date()) + ".json";
+link.click();
+```
+Five lines to download a file from a page with no server.
+
+```js
+try {
+  backup = JSON.parse(await file.text());
+} catch (error) {
+  backupMessage.textContent = "That file couldn't be read as a backup.";
+  return;
+}
+```
+`JSON.parse` throws on anything that isn't valid JSON, so we catch it and
+explain calmly instead of crashing.
+
+```js
+importFile.value = "";
+```
+Without this, picking the same file twice in a row wouldn't fire "change" the
+second time, because the value didn't change.
+
+### Quiz
+
+1. Why is `checkBackup` in logic.js instead of app.js?
+2. Someone edits a backup by hand and writes `"amountCents": 12.5`. What happens
+   when they load it?
+
+**Answers**
+
+<details>
+<summary>Show answers</summary>
+
+1. It's a pure function (data in, list of problems out), with no page and no
+   storage. That means it can be tested in tests.js, and it should be, since it
+   guards the user's data.
+2. `Number.isInteger(12.5)` is false, so that entry is reported as damaged, and the
+   message says "Nothing was changed. Entry N is damaged." Their current data is safe.
 
 </details>

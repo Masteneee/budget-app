@@ -336,6 +336,71 @@ document.getElementById("settings-form").addEventListener("submit", (event) => {
   render();
 });
 
+const backupMessage = document.getElementById("backup-message");
+const importFile = document.getElementById("import-file");
+const importConfirm = document.getElementById("import-confirm");
+// A backup that passed the checks and waits for "Yes, replace"
+let pendingBackup = null;
+
+document.getElementById("export-button").addEventListener("click", () => {
+  const backup = { app: "budget-app", version: 1, exportedAt: new Date().toISOString(), data: data };
+  // A Blob is file contents held in memory; the temporary link lets
+  // the browser "download" it without any server
+  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "budget-backup-" + toDateString(new Date()) + ".json";
+  link.click();
+  URL.revokeObjectURL(link.href);
+  backupMessage.textContent = "Backup downloaded";
+});
+
+document.getElementById("import-button").addEventListener("click", () => importFile.click());
+
+importFile.addEventListener("change", async () => {
+  const file = importFile.files[0];
+  // Reset so choosing the same file again still triggers "change"
+  importFile.value = "";
+  if (!file) {
+    return;
+  }
+  let backup = null;
+  try {
+    // await pauses here until the file is read, without freezing the page
+    backup = JSON.parse(await file.text());
+  } catch (error) {
+    backupMessage.textContent = "That file couldn't be read as a backup.";
+    return;
+  }
+  const problems = checkBackup(backup);
+  if (problems.length > 0) {
+    backupMessage.textContent = "Nothing was changed. " + problems.slice(0, 3).join(" ");
+    return;
+  }
+  pendingBackup = backup;
+  backupMessage.textContent = "";
+  document.getElementById("import-question").textContent =
+    "This backup has " + plural(backup.data.entries.length, "entry", "entries") +
+    ". Replace your current " + plural(data.entries.length, "entry", "entries") + " with it?";
+  importConfirm.hidden = false;
+});
+
+document.getElementById("import-yes").addEventListener("click", () => {
+  data = replaceData(pendingBackup.data);
+  pendingBackup = null;
+  importConfirm.hidden = true;
+  viewMonth = monthKey(toDateString(new Date()));
+  fillSettingsForm();
+  render();
+  backupMessage.textContent = "Backup loaded";
+});
+
+document.getElementById("import-no").addEventListener("click", () => {
+  pendingBackup = null;
+  importConfirm.hidden = true;
+  backupMessage.textContent = "Nothing was changed.";
+});
+
 document.getElementById("month-prev").addEventListener("click", () => {
   viewMonth = shiftMonth(viewMonth, -1);
   render();

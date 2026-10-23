@@ -136,4 +136,25 @@ assert.strictEqual(logic.formatHours(0.03), "< 0.1 h");
 assert.strictEqual(logic.formatHours(1.96), "2 h");
 assert.strictEqual(logic.formatHours(logic.hoursOfWork(1250, 1610)), "0.8 h");
 
+// plural
+assert.strictEqual(logic.plural(1, "entry", "entries"), "1 entry");
+assert.strictEqual(logic.plural(0, "entry", "entries"), "0 entries");
+assert.strictEqual(logic.plural(3, "entry", "entries"), "3 entries");
+
+// checkBackup
+const goodEntry = { id: "a", type: "expense", amountCents: 500, category: "Food", note: "", date: "2026-10-01" };
+assert.deepStrictEqual(logic.checkBackup({ app: "budget-app", version: 1, data: { entries: [goodEntry] } }), []);
+assert.deepStrictEqual(logic.checkBackup({ app: "budget-app", version: 1, data: { entries: [] } }), []);
+assert.strictEqual(logic.checkBackup(null).length, 1);
+assert.strictEqual(logic.checkBackup([1, 2]).length, 1);
+assert.strictEqual(logic.checkBackup({ app: "other-app" }).length, 1);
+assert.strictEqual(logic.checkBackup({ app: "budget-app", data: {} }).length, 1);
+assert.deepStrictEqual(
+  logic.checkBackup({
+    app: "budget-app",
+    data: { entries: [goodEntry, Object.assign({}, goodEntry, { amountCents: 12.5 }), null] },
+  }),
+  ["Entry 2 is damaged.", "Entry 3 is damaged."]
+);
+
 console.log("All tests passed");

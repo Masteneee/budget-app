@@ -30,6 +30,13 @@
   Ties are sorted alphabetically so rows don't swap places randomly.
 - **Phone layout targets: 48px tap targets, 16px inputs, 2 button columns below
   340px wide (task 1.6).** 48px follows Google's Material guideline (Apple says 44).
+- **Chart.js 4.4.1 from jsDelivr, pinned, with an `integrity` hash (task 2.1).**
+  jsDelivr serves the exact files published to npm, so the hash was computed
+  from the official npm package. If the CDN can't load, the chart is hidden and
+  the rest of the app works normally.
+- **Doughnut chart, no built-in legend (task 2.1).** The category list below
+  the chart gets a coloured dot per row and acts as the legend, so amounts
+  are readable without hovering.
 
 ---
 
@@ -665,5 +672,102 @@ A comma between selectors means "apply these rules to all of them".
 2. If the text ever wraps onto two lines (a long label, or big system fonts),
    a fixed height would cut it off. `min-height` guarantees a minimum and lets
    the button grow when needed.
+
+</details>
+
+---
+
+## Task 2.1: Category chart (2026-10-23)
+
+### What we built
+
+The "Where it went" card now has a doughnut chart above the category list. Each
+category has its own calm colour that never changes (Food is always green, Fun
+always orange), and each row of the list has a matching coloured dot, so the
+list doubles as the chart's legend. Hovering or tapping a slice shows its amount.
+The chart redraws after every add, edit or delete, and hides itself when there
+are no expenses. If the chart library can't load (no internet), the chart just
+doesn't appear and everything else keeps working.
+
+### New concepts
+
+**A library.** Code someone else wrote, packaged so you can use it. Drawing a
+doughnut chart by hand means trigonometry, hover detection, animation, screen
+sizes... Chart.js has done all of that, tested by millions of sites. We call
+`new Chart(canvas, settings)` and it does the work. The trade-off: you depend on
+code you didn't write, and you learn its way of doing things.
+
+**A CDN (Content Delivery Network).** A network of servers around the world
+that host files (like libraries) and hand them out quickly from whichever server
+is closest to you. Instead of copying Chart.js into our repo, we point a
+`<script src>` at jsDelivr's copy. Pros: nothing to download or update by hand,
+and it's probably already cached in your browser from other sites. Cons: it needs
+internet, and you're trusting someone else's server.
+
+**Version pinning.** `chart.js@4.4.1` asks for that exact version. If we wrote
+just `chart.js`, a future version with breaking changes could silently break our
+app one morning.
+
+**Subresource Integrity (SRI).** The `integrity="sha384-..."` attribute is a
+fingerprint of the file. The browser computes the fingerprint of what it
+downloads and refuses to run it if it doesn't match. So even if the CDN were
+hacked, it couldn't slip different code into our page. `crossorigin="anonymous"`
+is required for the browser to check it.
+
+**`<canvas>`.** An HTML element that's a blank drawing surface. Unlike normal
+HTML, what's drawn on it isn't made of elements; it's pixels painted by
+JavaScript. That's why we added `role="img"` and an `aria-label`: so screen
+readers know what it is.
+
+**Graceful degradation.** `typeof Chart === "undefined"` checks whether the
+library actually loaded. If not, we skip the chart instead of crashing. The
+list underneath has the same information, so nobody loses anything important.
+
+**Keeping one chart instance.** Creating a new Chart on every render would stack
+charts on the same canvas and leak memory. We create it once, then replace its
+data and call `update()`, which also animates the change nicely.
+
+### Key lines of code
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"
+        integrity="sha384-dug+..." crossorigin="anonymous"></script>
+```
+Load a pinned, fingerprinted library from a CDN, before our own scripts.
+
+```js
+if (typeof Chart === "undefined" || totals.length === 0) {
+  chartWrap.hidden = true;
+  return;
+}
+```
+Two good reasons to show no chart: the library didn't load, or there's nothing
+to draw.
+
+```js
+label: (context) => " " + formatCents(context.raw),
+```
+The chart holds cents (integers, like the rest of the app). We only turn them
+into dollars at the very last moment, when showing them, using the same
+function as everywhere else.
+
+### Quiz
+
+1. You open the app on a plane with no Wi-Fi. What happens, and why doesn't the
+   page crash?
+2. What would happen if someone changed one character inside the Chart.js file
+   on the CDN?
+
+**Answers**
+
+<details>
+<summary>Show answers</summary>
+
+1. The Chart.js script fails to load, so `Chart` is never defined. `renderChart`
+   checks `typeof Chart === "undefined"` and hides the chart. Everything else
+   (adding, totals, the category list) works because it only needs our own files.
+2. Its fingerprint (hash) would no longer match the `integrity` attribute, so the
+   browser would refuse to run it. The chart would be missing, just like offline,
+   but no unknown code would run on our page.
 
 </details>

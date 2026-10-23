@@ -34,7 +34,7 @@ Goal: adding an expense takes under 5 seconds.
 
 ## Phase 2: See it
 
-- [ ] **2.1 Category chart.** A doughnut or bar chart of this month's spending by
+- [x] **2.1 Category chart.** A doughnut or bar chart of this month's spending by
   category using Chart.js from a CDN. Explain what a library and a CDN are.
 - [ ] **2.2 Month switcher.** Buttons to view previous months. Compare this month vs
   last month per category ("Food: $40 less than last month").

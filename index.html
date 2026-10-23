@@ -49,6 +49,10 @@
     <section id="by-category">
       <h2>Where it went</h2>
       <p id="category-empty" class="empty">Your spending by category will show up here.</p>
+      <!-- Chart.js draws on a <canvas>: a blank rectangle you paint with code -->
+      <div id="chart-wrap" class="chart-wrap" hidden>
+        <canvas id="category-chart" aria-label="Spending by category chart" role="img"></canvas>
+      </div>
       <ul id="category-list" class="category-list"></ul>
     </section>
 
@@ -95,6 +99,13 @@
   <!-- Order matters: app.js uses functions from logic.js and storage.js,
        so those must load first. Scripts at the end of <body> run after
        the HTML above exists, so app.js can find the elements. -->
+  <!-- Chart.js comes from a CDN. The pinned version (4.4.1) means it can't
+       change under us, and "integrity" makes the browser refuse the file if
+       even one byte differs from the version we checked. If it fails to load
+       (offline, blocked), the app still works without the chart. -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"
+          integrity="sha384-dug+JxfBvklEQdJ4AYuBBAIScUz0bVN73xpy273gcAwHjb3qI0fXmuYNaNfdyYJG"
+          crossorigin="anonymous"></script>
   <script src="logic.js"></script>
   <script src="storage.js"></script>
   <script src="app.js"></script>

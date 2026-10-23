@@ -21,6 +21,19 @@ const editDate = document.getElementById("edit-date");
 const editMessage = document.getElementById("edit-message");
 const deleteConfirm = document.getElementById("delete-confirm");
 
+// Calm, easy-to-tell-apart colours; each category always keeps its colour
+const CATEGORY_COLORS = {
+  Food: "#3a7d6b",
+  Transport: "#5b8db8",
+  Fun: "#e0a458",
+  School: "#8e7cc3",
+  Bills: "#7d8a84",
+  Other: "#c4b48a",
+};
+
+// Created on the first render, then only its data is updated
+let categoryChart = null;
+
 // Which entry the dialog is editing, or null when it's closed
 let editingId = null;
 // What the add form is logging right now: "expense" or "income"
@@ -74,14 +87,61 @@ function renderTotals(entries) {
   document.getElementById("total-left").textContent = formatCents(totals.leftCents);
 }
 
+function renderChart(totals) {
+  const chartWrap = document.getElementById("chart-wrap");
+  // Chart is only defined if the CDN script loaded; offline, we skip the chart
+  if (typeof Chart === "undefined" || totals.length === 0) {
+    chartWrap.hidden = true;
+    return;
+  }
+  chartWrap.hidden = false;
+
+  const labels = totals.map((total) => total.category);
+  const values = totals.map((total) => total.cents);
+  const colors = labels.map((category) => CATEGORY_COLORS[category]);
+
+  if (categoryChart === null) {
+    categoryChart = new Chart(document.getElementById("category-chart"), {
+      type: "doughnut",
+      data: {
+        labels: labels,
+        datasets: [{ data: values, backgroundColor: colors, borderColor: "#ffffff", borderWidth: 2 }],
+      },
+      options: {
+        plugins: {
+          // The list under the chart already acts as the legend
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              // The chart holds cents, so format them like everywhere else
+              label: (context) => " " + formatCents(context.raw),
+            },
+          },
+        },
+      },
+    });
+  } else {
+    categoryChart.data.labels = labels;
+    categoryChart.data.datasets[0].data = values;
+    categoryChart.data.datasets[0].backgroundColor = colors;
+    categoryChart.update();
+  }
+}
+
 function renderCategoryTotals(entries) {
   const list = document.getElementById("category-list");
   const totals = totalsByCategory(entries);
+  renderChart(totals);
   list.innerHTML = "";
   document.getElementById("category-empty").hidden = totals.length > 0;
   for (const total of totals) {
     const row = makeElement("li", "category-row", "");
-    row.appendChild(makeElement("span", "", total.category));
+    const name = makeElement("span", "category-name", total.category);
+    // The coloured dot links each row to its slice of the chart
+    const dot = makeElement("span", "category-dot", "");
+    dot.style.background = CATEGORY_COLORS[total.category];
+    name.prepend(dot);
+    row.appendChild(name);
     row.appendChild(makeElement("span", "category-amount", formatCents(total.cents)));
     list.appendChild(row);
   }

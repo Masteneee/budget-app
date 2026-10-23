@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <!-- Without this line, phones zoom out and show a tiny desktop-sized page -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Budget App</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Budget App</h1>
+  </header>
+
+  <main>
+    <section id="this-month">
+      <h2>This month</h2>
+      <p id="month-empty">Nothing here yet.</p>
+    </section>
+  </main>
+
+  <!-- Order matters: app.js uses functions from logic.js and storage.js,
+       so those must load first. Scripts at the end of <body> run after
+       the HTML above exists, so app.js can find the elements. -->
+  <script src="logic.js"></script>
+  <script src="storage.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

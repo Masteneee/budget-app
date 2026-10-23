@@ -6,6 +6,9 @@ const logic = require("./logic.js");
 
 // formatCents
 assert.strictEqual(logic.formatCents(1250), "$12.50");
+assert.strictEqual(logic.formatCents(0), "$0.00");
+assert.strictEqual(logic.formatCents(-500), "-$5.00");
+assert.strictEqual(logic.formatCents(5), "$0.05");
 
 // parseAmountToCents
 assert.strictEqual(logic.parseAmountToCents("12"), 1200);
@@ -55,5 +58,23 @@ assert.strictEqual(twoEntries[1].amountCents, 200); // original untouched
 assert.deepStrictEqual(logic.updateEntry(twoEntries, "zzz", { amountCents: 1 }), twoEntries);
 assert.deepStrictEqual(logic.removeEntry(twoEntries, "a").map((e) => e.id), ["b"]);
 assert.strictEqual(logic.removeEntry(twoEntries, "zzz").length, 2);
+
+// categoriesFor
+assert.deepStrictEqual(logic.categoriesFor("income"), ["Job", "Gift", "Other"]);
+assert.strictEqual(logic.categoriesFor("expense")[0], "Food");
+
+// monthTotals
+assert.deepStrictEqual(logic.monthTotals([]), { inCents: 0, outCents: 0, leftCents: 0 });
+assert.deepStrictEqual(
+  logic.monthTotals([
+    { type: "income", amountCents: 50000 },
+    { type: "expense", amountCents: 1250 },
+    { type: "expense", amountCents: 750 },
+    { type: "income", amountCents: 2000 },
+  ]),
+  { inCents: 52000, outCents: 2000, leftCents: 50000 }
+);
+// Spending more than you earned gives a negative "left"
+assert.strictEqual(logic.monthTotals([{ type: "expense", amountCents: 300 }]).leftCents, -300);
 
 console.log("All tests passed");

@@ -198,3 +198,60 @@ button.quiet {
 .delete-confirm p {
   margin-bottom: 8px;
 }
+
+.summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 16px;
+}
+
+.summary div {
+  display: flex;
+  flex-direction: column;
+}
+
+/* "Left this month" is the number that matters most, so it spans
+   the full width and is bigger */
+.summary-main {
+  grid-column: 1 / -1;
+}
+
+.summary-label {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.summary-value {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.summary-main .summary-value {
+  font-size: 2rem;
+  color: var(--accent);
+}
+
+.type-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  margin-bottom: 12px;
+  padding: 4px;
+  background: #e8e6df;
+  border-radius: 10px;
+}
+
+.type-toggle button {
+  background: none;
+  color: var(--text);
+}
+
+/* The chosen option looks like a raised tab */
+.type-toggle button[aria-pressed="true"] {
+  background: var(--surface);
+  font-weight: 600;
+}
+
+.entry.income .entry-amount {
+  color: var(--accent);
+}

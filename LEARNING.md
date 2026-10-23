@@ -22,6 +22,10 @@
 - **Editing happens in a popup (`<dialog>`), and deleting needs a second tap on
   "Yes, delete" (task 1.3).** A built-in dialog is less code than building our
   own overlay, and an in-page confirm looks calmer than the browser's `confirm()` box.
+- **Income categories are Job, Gift and Other (task 1.4).** Matches the plan's
+  examples (job pay, gifts) plus a catch-all.
+- **A negative "Left this month" stays in the calm green colour (task 1.4).** It
+  shows "-$7.50" plainly, with no red, per the "no guilt" rule.
 
 ---
 
@@ -418,5 +422,88 @@ editCategory.appendChild(new Option(category, category));
    saved would be lost. It works by accident, which is the worst kind of working.
 2. It returns a new array with the same entries, nothing changed. That's
    safe: nothing breaks and nothing gets lost. The test file checks this exact case.
+
+</details>
+
+---
+
+## Task 1.4: Income (2026-10-23)
+
+### What we built
+
+The add form now has an "Expense / Income" switch at the top. Choosing Income
+swaps the category buttons for Job, Gift and Other. A new card at the very top
+shows three numbers for the current month: "Money in", "Money out", and, biggest,
+"Left this month" (in minus out). Income rows in the list have a green "+" before
+the amount. Editing an income entry shows income categories in the dropdown. We
+also fixed `formatCents` so negative amounts read "-$7.50" instead of "$-7.50".
+
+### New concepts
+
+**Accumulator loop.** `monthTotals` starts two counters at 0 and adds each
+entry's amount to one of them. This "start at zero, add as you go" pattern is how
+most totals are computed.
+
+**`let` vs `const`.** `const` means "this name always points to the same value".
+`let` allows reassigning. The totals use `let` because `inCents += ...` changes
+them. Use `const` by default, and `let` only when you need to reassign.
+
+**Returning an object.** A function can only return one thing, so `monthTotals`
+returns one object with three fields: `{ inCents, outCents, leftCents }`. The
+caller picks the fields it needs.
+
+**One `render()` function.** Before, saving called `renderList()`. Now two parts
+of the page depend on the data (totals and list), so `render()` updates both.
+Every change (add, edit, delete) calls `render()`, so the page can never show
+stale totals. This "data changes, then redraw from data" idea is the core of how
+modern UI frameworks like React work.
+
+**`aria-pressed`.** An attribute that tells screen readers a button is a toggle
+and whether it's on. We also use it in CSS (`button[aria-pressed="true"]`) to
+style the selected one, so the look and the accessibility can't disagree.
+
+**CSS Grid.** `grid-template-columns: 1fr 1fr` makes two equal columns.
+`grid-column: 1 / -1` makes an item stretch from the first column line to the
+last, which is how "Left this month" spans the full width.
+
+### Key lines of code
+
+```js
+const sign = cents < 0 ? "-" : "";
+const dollars = (Math.abs(cents) / 100).toFixed(2);
+return sign + "$" + dollars;
+```
+`Math.abs` removes the minus sign, so we format the positive number and put the
+minus back in front of the "$" ourselves.
+
+```js
+return type === "income" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
+```
+One small function decides the category list. The add buttons and the edit
+dropdown both call it, so they can never disagree.
+
+```js
+return { inCents: inCents, outCents: outCents, leftCents: inCents - outCents };
+```
+"Left" is computed from the other two, never stored. Storing it would mean
+keeping three numbers in sync forever.
+
+### Quiz
+
+1. Why does `monthTotals` take a list of entries instead of looking up
+   "this month" itself?
+2. You log $20 income and then a $30 expense. What do the three numbers at the
+   top show?
+
+**Answers**
+
+<details>
+<summary>Show answers</summary>
+
+1. So it stays pure and reusable. It doesn't need to know today's date (which
+   changes every day and makes tests unreliable), and later the month switcher
+   (task 2.2) can pass in any month's entries.
+2. Money in $20.00, Money out $30.00, Left this month -$10.00 (shown in the
+   same calm green, not red).
 
 </details>

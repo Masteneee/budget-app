@@ -25,7 +25,7 @@ Goal: adding an expense takes under 5 seconds.
   amount and date. Shows a friendly message when the list is empty.
 - [x] **1.3 Edit and delete.** Tap an entry to edit it or delete it, with a confirm
   step before deleting.
-- [ ] **1.4 Income.** Add income entries (job pay, gifts). Show "Money in", "Money out"
+- [x] **1.4 Income.** Add income entries (job pay, gifts). Show "Money in", "Money out"
   and "Left this month" at the top. Test the totals in tests.js.
 - [ ] **1.5 Totals per category.** A simple list of how much went to each category
   this month, biggest first. Logic in logic.js with tests.

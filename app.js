@@ -8,6 +8,8 @@ const noteInput = document.getElementById("note");
 const dateInput = document.getElementById("date");
 const categoryButtons = document.getElementById("category-buttons");
 const addMessage = document.getElementById("add-message");
+const typeExpenseButton = document.getElementById("type-expense");
+const typeIncomeButton = document.getElementById("type-income");
 const entryList = document.getElementById("entry-list");
 const monthEmpty = document.getElementById("month-empty");
 const editDialog = document.getElementById("edit-dialog");
@@ -21,13 +23,15 @@ const deleteConfirm = document.getElementById("delete-confirm");
 
 // Which entry the dialog is editing, or null when it's closed
 let editingId = null;
+// What the add form is logging right now: "expense" or "income"
+let addType = "expense";
 
 // Good enough to be unique for one person's data: time + random letters
 function makeId() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 }
 
-function addExpense(category) {
+function addEntry(category) {
   const amountCents = parseAmountToCents(amountInput.value);
   if (amountCents === null) {
     addMessage.textContent = "Type an amount first, like 12.50";
@@ -37,14 +41,14 @@ function addExpense(category) {
 
   data.entries.push({
     id: makeId(),
-    type: "expense",
+    type: addType,
     amountCents: amountCents,
     category: category,
     note: noteInput.value.trim(),
     date: dateInput.value || toDateString(new Date()),
   });
   saveData(data);
-  renderList();
+  render();
 
   addMessage.textContent = "Saved " + formatCents(amountCents) + " in " + category;
   // Clear the form so the next expense can be typed right away
@@ -63,11 +67,25 @@ function makeElement(tag, className, text) {
   return element;
 }
 
+function renderTotals(entries) {
+  const totals = monthTotals(entries);
+  document.getElementById("total-in").textContent = formatCents(totals.inCents);
+  document.getElementById("total-out").textContent = formatCents(totals.outCents);
+  document.getElementById("total-left").textContent = formatCents(totals.leftCents);
+}
+
+// Redraws everything that depends on the data. Called after any change.
+function render() {
+  const thisMonth = monthKey(toDateString(new Date()));
+  const entries = entriesInMonth(data.entries, thisMonth);
+  renderTotals(entries);
+  renderList(entries);
+}
+
 // Redraws the whole list from data. Simpler than updating one row,
 // and fast enough for a few hundred entries.
-function renderList() {
-  const thisMonth = monthKey(toDateString(new Date()));
-  const entries = sortNewestFirst(entriesInMonth(data.entries, thisMonth));
+function renderList(monthEntries) {
+  const entries = sortNewestFirst(monthEntries);
 
   entryList.innerHTML = "";
   monthEmpty.hidden = entries.length > 0;
@@ -78,7 +96,7 @@ function renderList() {
     // screen readers, unlike a clickable <div>
     const row = document.createElement("button");
     row.type = "button";
-    row.className = "entry";
+    row.className = entry.type === "income" ? "entry income" : "entry";
     row.addEventListener("click", () => openEditor(entry));
     const details = makeElement("div", "entry-details", "");
     details.appendChild(makeElement("span", "entry-category", entry.category));
@@ -87,7 +105,9 @@ function renderList() {
     }
     row.appendChild(details);
     const right = makeElement("div", "entry-right", "");
-    right.appendChild(makeElement("span", "entry-amount", formatCents(entry.amountCents)));
+    // Income gets a "+" so the two kinds are easy to tell apart at a glance
+    const sign = entry.type === "income" ? "+" : "";
+    right.appendChild(makeElement("span", "entry-amount", sign + formatCents(entry.amountCents)));
     right.appendChild(makeElement("span", "entry-date", formatShortDate(entry.date)));
     row.appendChild(right);
     item.appendChild(row);
@@ -98,7 +118,7 @@ function renderList() {
 function openEditor(entry) {
   editingId = entry.id;
   editCategory.innerHTML = "";
-  for (const category of EXPENSE_CATEGORIES) {
+  for (const category of categoriesFor(entry.type)) {
     editCategory.appendChild(new Option(category, category));
   }
   // toFixed(2) without "$" so the box holds a plain number to edit
@@ -132,7 +152,7 @@ editForm.addEventListener("submit", (event) => {
     date: editDate.value || toDateString(new Date()),
   });
   saveData(data);
-  renderList();
+  render();
   closeEditor();
 });
 
@@ -148,19 +168,36 @@ document.getElementById("delete-no").addEventListener("click", () => {
 document.getElementById("delete-yes").addEventListener("click", () => {
   data.entries = removeEntry(data.entries, editingId);
   saveData(data);
-  renderList();
+  render();
   closeEditor();
 });
 
-// One button per category; tapping it saves, so logging is one tap
-for (const category of EXPENSE_CATEGORIES) {
-  const button = document.createElement("button");
-  button.type = "button";
-  button.textContent = category;
-  button.addEventListener("click", () => addExpense(category));
-  categoryButtons.appendChild(button);
+// One button per category; tapping it saves, so logging is one tap.
+// Rebuilt when switching between expense and income.
+function renderCategoryButtons() {
+  categoryButtons.innerHTML = "";
+  for (const category of categoriesFor(addType)) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = category;
+    button.addEventListener("click", () => addEntry(category));
+    categoryButtons.appendChild(button);
+  }
 }
 
+function setAddType(type) {
+  addType = type;
+  typeExpenseButton.setAttribute("aria-pressed", String(type === "expense"));
+  typeIncomeButton.setAttribute("aria-pressed", String(type === "income"));
+  renderCategoryButtons();
+  addMessage.textContent = "";
+  amountInput.focus();
+}
+
+typeExpenseButton.addEventListener("click", () => setAddType("expense"));
+typeIncomeButton.addEventListener("click", () => setAddType("income"));
+
+renderCategoryButtons();
 dateInput.value = toDateString(new Date());
-renderList();
+render();
 amountInput.focus();

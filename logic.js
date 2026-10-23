@@ -3,12 +3,19 @@
 // That is what makes these functions easy to test with Node.
 
 const EXPENSE_CATEGORIES = ["Food", "Transport", "Fun", "School", "Bills", "Other"];
+const INCOME_CATEGORIES = ["Job", "Gift", "Other"];
+
+function categoriesFor(type) {
+  return type === "income" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
+}
 
 // Money is stored in cents (1250 = $12.50) because computers can't
 // store most decimals exactly: 0.1 + 0.2 gives 0.30000000000000004.
 function formatCents(cents) {
-  const dollars = (cents / 100).toFixed(2);
-  return "$" + dollars;
+  // The minus goes before the "$": -$5.00, not $-5.00
+  const sign = cents < 0 ? "-" : "";
+  const dollars = (Math.abs(cents) / 100).toFixed(2);
+  return sign + "$" + dollars;
 }
 
 // Turns what the user typed ("12", "12.5", "12,50") into cents (1250).
@@ -78,12 +85,29 @@ function removeEntry(entries, id) {
   return entries.filter((entry) => entry.id !== id);
 }
 
+// Adds up money in and money out for a list of entries.
+// Works on any list, so the caller decides which month to pass in.
+function monthTotals(entries) {
+  let inCents = 0;
+  let outCents = 0;
+  for (const entry of entries) {
+    if (entry.type === "income") {
+      inCents += entry.amountCents;
+    } else {
+      outCents += entry.amountCents;
+    }
+  }
+  return { inCents: inCents, outCents: outCents, leftCents: inCents - outCents };
+}
+
 // In the browser, functions above are already global. Node has no
 // globals between files, so tests.js needs them handed over here.
 // `module` only exists in Node, which is why we check first.
 if (typeof module !== "undefined") {
   module.exports = {
     EXPENSE_CATEGORIES,
+    INCOME_CATEGORIES,
+    categoriesFor,
     formatCents,
     parseAmountToCents,
     toDateString,
@@ -93,5 +117,6 @@ if (typeof module !== "undefined") {
     formatShortDate,
     updateEntry,
     removeEntry,
+    monthTotals,
   };
 }

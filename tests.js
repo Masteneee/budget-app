@@ -400,6 +400,28 @@ assert.deepStrictEqual(logic.portfolioStats(afterSell, 100000), {
   gainCents: 2000,
 });
 
+// Trades keep other practice fields, like startCents
+const practiceWithStart = { cashCents: 100000, startCents: 150000, holdings: {} };
+assert.strictEqual(logic.buyShares(practiceWithStart, "ABC", 1, 100).practice.startCents, 150000);
+const boughtWithStart = logic.buyShares(practiceWithStart, "ABC", 1, 100).practice;
+assert.strictEqual(logic.sellShares(boughtWithStart, "ABC", 1, 100).practice.startCents, 150000);
+
+// addPracticeMoney: $400 from a goal, gain stays at 0
+const funded = logic.addPracticeMoney({ cashCents: 100000, startCents: 100000, holdings: {} }, 40000);
+assert.deepStrictEqual(funded, { cashCents: 140000, startCents: 140000, holdings: {} });
+assert.strictEqual(logic.portfolioStats(funded, funded.startCents).gainCents, 0);
+
+// futureValueCents: $1,000 at 5% for 10 years = $1,628.89
+assert.strictEqual(logic.futureValueCents(100000, 5, 10), 162889);
+assert.strictEqual(logic.futureValueCents(100000, 7, 0), 100000);
+assert.strictEqual(logic.futureValueCents(40000, 2, 1), 40800);
+
+// projectionRows
+assert.deepStrictEqual(logic.projectionRows(100000, [2, 7], [1, 10]), [
+  { years: 1, values: [102000, 107000] },
+  { years: 10, values: [121899, 196715] },
+]);
+
 // describeGain
 assert.strictEqual(logic.describeGain(1500, 4.3), "+$15.00 (+4.3%)");
 assert.strictEqual(logic.describeGain(-2000, -10), "-$20.00 (-10.0%)");

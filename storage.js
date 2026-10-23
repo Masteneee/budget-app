@@ -18,6 +18,9 @@ function emptyData() {
     // The paper trading simulator: fake money only
     practice: {
       cashCents: PRACTICE_START_CENTS,
+      // All fake money ever put in ($1,000 plus anything added from goals),
+      // so "gain or loss" compares against what you started with
+      startCents: PRACTICE_START_CENTS,
       // { VOO: { shares: 1, costCents: 51234, lastPriceCents: 51234 } }
       holdings: {},
     },

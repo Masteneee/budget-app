@@ -69,7 +69,7 @@ Educational only. Fake money. No "buy this" advice anywhere.
   current value and gain or loss. All math in logic.js with tests.
 - [x] **4.3 Lesson cards.** 6 short cards: stock, ETF, diversification, fees,
   risk vs time, why "get rich quick" fails. Max 80 words each, plain language.
-- [ ] **4.4 Savings link.** On a savings goal: "Practice investing this amount"
+- [x] **4.4 Savings link.** On a savings goal: "Practice investing this amount"
   copies the goal's amount into the simulator as fake money, and shows what it
   would be worth over time. Clear label: past results don't predict the future.
 

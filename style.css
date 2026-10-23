@@ -603,3 +603,33 @@ details summary {
 .lesson p {
   margin-top: 0;
 }
+
+.practice-link {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.projection {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.projection th,
+.projection td {
+  padding: 8px 4px;
+  text-align: right;
+  border-bottom: 1px solid #eceae3;
+}
+
+.projection th:first-child {
+  text-align: left;
+  white-space: nowrap;
+}
+
+.projection thead th {
+  color: var(--muted);
+  font-weight: 400;
+  font-size: 0.85rem;
+}

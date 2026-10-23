@@ -257,6 +257,11 @@ function renderGoal(goal) {
   item.appendChild(form);
   item.appendChild(message);
 
+  const practiceButton = makeElement("button", "secondary practice-link", "Practice investing this amount");
+  practiceButton.type = "button";
+  practiceButton.addEventListener("click", () => practiceWithGoal(goal));
+  item.appendChild(practiceButton);
+
   const deleteStart = makeElement("button", "quiet", "Delete goal");
   deleteStart.type = "button";
   const confirmBox = makeElement("div", "delete-confirm", "");
@@ -701,13 +706,14 @@ const quoteMessage = document.getElementById("quote-message");
 let currentQuote = null;
 
 function renderPractice() {
-  const stats = portfolioStats(data.practice, PRACTICE_START_CENTS);
+  const startCents = data.practice.startCents;
+  const stats = portfolioStats(data.practice, startCents);
   document.getElementById("practice-total").textContent = formatCents(stats.totalCents);
   document.getElementById("practice-cash").textContent = formatCents(stats.cashCents);
   document.getElementById("practice-invested").textContent = formatCents(stats.holdingsCents);
-  const gainPercent = Math.round((stats.gainCents / PRACTICE_START_CENTS) * 1000) / 10;
+  const gainPercent = Math.round((stats.gainCents / startCents) * 1000) / 10;
   document.getElementById("practice-gain").textContent =
-    describeGain(stats.gainCents, gainPercent) + " since you started with " + formatCents(PRACTICE_START_CENTS);
+    describeGain(stats.gainCents, gainPercent) + " since you started with " + formatCents(startCents);
   renderHoldings();
   renderTradePreview();
 }
@@ -774,6 +780,38 @@ document.getElementById("buy-button").addEventListener("click", () => trade("buy
 document.getElementById("sell-button").addEventListener("click", () => trade("sell"));
 document.getElementById("trade-shares").addEventListener("input", renderTradePreview);
 
+const PROJECTION_RATES = [2, 5, 7];
+const PROJECTION_YEARS = [1, 5, 10, 20];
+
+// Copies a goal's money into the simulator and shows what it could become
+function practiceWithGoal(goal) {
+  // What you've saved so far, or the target if you haven't started yet
+  const saved = goalSavedCents(goal);
+  const amountCents = saved > 0 ? saved : goal.targetCents;
+  data.practice = addPracticeMoney(data.practice, amountCents);
+  saveData(data);
+
+  document.getElementById("projection-title").textContent =
+    "What could " + formatCents(amountCents) + " from \"" + goal.name + "\" become?";
+  const body = document.getElementById("projection-body");
+  body.innerHTML = "";
+  for (const row of projectionRows(amountCents, PROJECTION_RATES, PROJECTION_YEARS)) {
+    const tableRow = document.createElement("tr");
+    tableRow.appendChild(makeElement("th", "", plural(row.years, "year", "years")));
+    for (const value of row.values) {
+      tableRow.appendChild(makeElement("td", "", formatCents(value)));
+    }
+    body.appendChild(tableRow);
+  }
+  document.getElementById("projection-card").hidden = false;
+  document.getElementById("trade-message").textContent = "";
+  document.getElementById("projection-message").textContent =
+    "Added " + formatCents(amountCents) + " of practice money. Your real goal is not touched.";
+
+  showTab("practice");
+  document.getElementById("projection-card").scrollIntoView();
+}
+
 // Built once: the lessons never change while the app is open
 function renderLessons() {
   const container = document.getElementById("lesson-list");
@@ -809,7 +847,7 @@ document.getElementById("reset-no").addEventListener("click", () => {
   document.getElementById("reset-confirm").hidden = true;
 });
 document.getElementById("reset-yes").addEventListener("click", () => {
-  data.practice = { cashCents: PRACTICE_START_CENTS, holdings: {} };
+  data.practice = { cashCents: PRACTICE_START_CENTS, startCents: PRACTICE_START_CENTS, holdings: {} };
   saveData(data);
   document.getElementById("reset-confirm").hidden = true;
   document.getElementById("trade-message").textContent = "";

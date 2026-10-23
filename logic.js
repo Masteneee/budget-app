@@ -487,7 +487,8 @@ function buyShares(practice, ticker, shares, priceCents) {
       lastPriceCents: priceCents,
     },
   });
-  return { practice: { cashCents: practice.cashCents - costCents, holdings: holdings } };
+  // Object.assign keeps the other fields (like startCents) as they were
+  return { practice: Object.assign({}, practice, { cashCents: practice.cashCents - costCents, holdings: holdings }) };
 }
 
 function sellShares(practice, ticker, shares, priceCents) {
@@ -509,7 +510,9 @@ function sellShares(practice, ticker, shares, priceCents) {
       lastPriceCents: priceCents,
     };
   }
-  return { practice: { cashCents: practice.cashCents + shares * priceCents, holdings: holdings } };
+  return {
+    practice: Object.assign({}, practice, { cashCents: practice.cashCents + shares * priceCents, holdings: holdings }),
+  };
 }
 
 // Everything worth showing about one holding at a given price
@@ -540,6 +543,29 @@ function portfolioStats(practice, startCents) {
     totalCents: totalCents,
     gainCents: totalCents - startCents,
   };
+}
+
+// Adds fake money (for example a savings goal's amount) to the simulator.
+// startCents grows too, so added money doesn't look like an investment gain.
+function addPracticeMoney(practice, cents) {
+  return Object.assign({}, practice, {
+    cashCents: practice.cashCents + cents,
+    startCents: practice.startCents + cents,
+  });
+}
+
+// What an amount would become after some years at a steady yearly rate.
+// Real investments never grow steadily; this is an example, not a forecast.
+function futureValueCents(cents, ratePercent, years) {
+  return Math.round(cents * Math.pow(1 + ratePercent / 100, years));
+}
+
+// A small table: one row per number of years, one value per rate
+function projectionRows(cents, rates, yearsList) {
+  return yearsList.map((years) => ({
+    years: years,
+    values: rates.map((rate) => futureValueCents(cents, rate, years)),
+  }));
 }
 
 // "+$12.00 (+2.4%)" or "-$3.00 (-1.0%)": the sign says it all, no colours
@@ -652,6 +678,9 @@ if (typeof module !== "undefined") {
     holdingStats,
     portfolioStats,
     describeGain,
+    addPracticeMoney,
+    futureValueCents,
+    projectionRows,
     LESSONS,
     wordCount,
   };

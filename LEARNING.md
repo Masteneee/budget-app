@@ -109,6 +109,13 @@
   words" (task 4.3).** They're collapsible so the Practice tab stays short. The
   fees lesson's "$12,000" example is checked by a test calculation. No card names
   a specific stock or fund.
+- **"Practice investing this amount" adds the goal's saved amount (or its target
+  if nothing is saved yet) to practice cash, and keeps existing holdings (task 4.4).**
+  The practice account now tracks `startCents` (all fake money put in), so
+  added money never shows up as a fake "gain". Your real goal is never changed.
+- **The projection uses 2%, 5% and 7% a year over 1, 5, 10 and 20 years (task 4.4).**
+  Fixed example rates, not predictions, under a clear "past results don't predict
+  the future" label. 2% stands in for a savings account.
 
 ---
 
@@ -1885,5 +1892,90 @@ Reusing `<details>` (from goals) gives tap-to-open cards with no extra JavaScrip
    would itself have grown in every later year. Like interest, fees compound.
 2. The test `assert.strictEqual(logic.LESSONS.length, 6)` fails, because the plan
    calls for 6 cards. If seven is the new plan, update the plan and the test together.
+
+</details>
+
+---
+
+## Task 4.4: Savings link (2026-10-23)
+
+### What we built
+
+Every savings goal now has a "Practice investing this amount" button. Tapping it
+takes the money saved in that goal (or the target, if you haven't started yet),
+adds it to your practice account as fake money, and switches to the Practice tab.
+There, a new card asks "What could $400.00 from "New bike" become?" and shows a
+table: the amount after 1, 5, 10 and 20 years at 2%, 5% and 7% a year. Right below,
+in bold: "Examples, not predictions. Past results don't predict the future..."
+Your real goal stays exactly as it was. The practice account's "since you started
+with" amount now includes the added money, so it doesn't look like a gain.
+
+### New concepts
+
+**Compound growth formula.** After `n` years at rate `r`, an amount becomes
+`amount × (1 + r)ⁿ`. Each year grows on top of the last. $400 at 7% is $428 after
+1 year, but $1,548 after 20. Most of that growth happens in the later years,
+which is why starting early matters more than starting big.
+
+**A projection is not a prediction.** Real returns jump around: +20% one year,
+−15% the next. A steady 7% line hides that. Showing three rates side by side
+(including a savings-account-like 2%) shows a *range* instead of one promise,
+and the label says it plainly. Honest presentation of numbers is a skill, not
+just a legal disclaimer.
+
+**Tracking what you put in.** `startCents` is the total fake money ever added. Gain
+= current total − startCents. Without it, adding $400 would look like a $400
+profit. Real investment accounts do the same thing with "contributions".
+
+**`<table>` for tabular data.** Rows and columns of numbers are what tables are
+for. `<thead>` and `<tbody>` separate the header from the data, and
+`scope="col"` tells screen readers each header belongs to its column.
+`font-variant-numeric: tabular-nums` makes every digit the same width, so
+amounts line up.
+
+**`scrollIntoView()`.** Scrolls the page so an element is visible. Handy after
+switching tabs, so the user lands on what they asked for.
+
+**Changing a function's output without breaking callers.** `buyShares` and
+`sellShares` now use `Object.assign({}, practice, {...})` so they keep fields
+they don't know about (like `startCents`). The old tests still pass unchanged,
+and new tests prove `startCents` survives a trade.
+
+### Key lines of code
+
+```js
+return Math.round(cents * Math.pow(1 + ratePercent / 100, years));
+```
+Compound growth in one line, rounded to whole cents.
+
+```js
+return Object.assign({}, practice, {
+  cashCents: practice.cashCents + cents,
+  startCents: practice.startCents + cents,
+});
+```
+Add money to both cash and "what you put in", so gain or loss stays honest.
+
+```js
+const amountCents = saved > 0 ? saved : goal.targetCents;
+```
+Use real savings when there are some; otherwise imagine the full target.
+
+### Quiz
+
+1. You put $1,000 into the simulator, it grows to $1,100, then you add $400 from a
+   goal. What does "gain since you started" show?
+2. At 7% a year, roughly how long does money take to double? (Hint: look at the
+   table, or try the "rule of 72": 72 ÷ 7.)
+
+**Answers**
+
+<details>
+<summary>Show answers</summary>
+
+1. Total $1,500, start $1,400, so +$100.00 (+7.1%). The $400 is counted as money
+   put in, not as a gain.
+2. About 10 years (72 ÷ 7 ≈ 10.3). The table agrees: $400 becomes $786.86 after
+   10 years, nearly double.
 
 </details>

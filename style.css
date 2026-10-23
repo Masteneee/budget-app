@@ -564,11 +564,6 @@ details summary {
   color: var(--text);
 }
 
-#wallet {
-  display: flex;
-  flex-direction: column;
-}
-
 .quote-result {
   display: flex;
   flex-direction: column;
@@ -586,4 +581,13 @@ details summary {
 
 #api-key-form button {
   width: 100%;
+}
+
+.trade-form {
+  margin-top: 12px;
+}
+
+#holdings-card .secondary {
+  width: 100%;
+  margin-top: 8px;
 }

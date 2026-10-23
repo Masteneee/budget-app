@@ -697,9 +697,113 @@ document.getElementById("tab-practice").addEventListener("click", () => showTab(
 const apiKeyInput = document.getElementById("api-key");
 const quoteMessage = document.getElementById("quote-message");
 
+// The quote currently shown in "Look up a price", or null
+let currentQuote = null;
+
 function renderPractice() {
-  document.getElementById("practice-cash").textContent = formatCents(data.practice.cashCents);
+  const stats = portfolioStats(data.practice, PRACTICE_START_CENTS);
+  document.getElementById("practice-total").textContent = formatCents(stats.totalCents);
+  document.getElementById("practice-cash").textContent = formatCents(stats.cashCents);
+  document.getElementById("practice-invested").textContent = formatCents(stats.holdingsCents);
+  const gainPercent = Math.round((stats.gainCents / PRACTICE_START_CENTS) * 1000) / 10;
+  document.getElementById("practice-gain").textContent =
+    describeGain(stats.gainCents, gainPercent) + " since you started with " + formatCents(PRACTICE_START_CENTS);
+  renderHoldings();
+  renderTradePreview();
 }
+
+function renderHoldings() {
+  const list = document.getElementById("holdings-list");
+  const tickers = Object.keys(data.practice.holdings).sort();
+  list.innerHTML = "";
+  document.getElementById("holdings-empty").hidden = tickers.length > 0;
+  document.getElementById("refresh-prices").hidden = tickers.length === 0;
+  for (const ticker of tickers) {
+    const holding = data.practice.holdings[ticker];
+    const stats = holdingStats(holding, holding.lastPriceCents);
+    const item = makeElement("li", "goal", "");
+    const top = makeElement("div", "goal-top", "");
+    top.appendChild(makeElement("span", "goal-name", ticker));
+    top.appendChild(makeElement("span", "category-amount", formatCents(stats.valueCents)));
+    item.appendChild(top);
+    item.appendChild(makeElement("p", "budget-text",
+      plural(stats.shares, "share", "shares") + " · average cost " + formatCents(stats.averageCostCents) +
+      " · last price " + formatCents(holding.lastPriceCents)));
+    item.appendChild(makeElement("p", "budget-text", "Gain or loss: " + describeGain(stats.gainCents, stats.gainPercent)));
+    list.appendChild(item);
+  }
+}
+
+// Shows what a trade would cost before you tap Buy or Sell
+function renderTradePreview() {
+  const preview = document.getElementById("trade-preview");
+  if (currentQuote === null) {
+    return;
+  }
+  const shares = parseShares(document.getElementById("trade-shares").value);
+  const owned = data.practice.holdings[currentQuote.ticker];
+  let text = shares === null ? "Whole shares only, like 1 or 3" : plural(shares, "share", "shares") +
+    " × " + formatCents(currentQuote.priceCents) + " = " + formatCents(shares * currentQuote.priceCents);
+  text += ". You own " + plural(owned ? owned.shares : 0, "share", "shares") + ".";
+  preview.textContent = text;
+}
+
+function trade(kind) {
+  const message = document.getElementById("trade-message");
+  const shares = parseShares(document.getElementById("trade-shares").value);
+  if (shares === null) {
+    message.textContent = "Type a whole number of shares, like 1 or 3";
+    return;
+  }
+  const ticker = currentQuote.ticker;
+  const result = kind === "buy"
+    ? buyShares(data.practice, ticker, shares, currentQuote.priceCents)
+    : sellShares(data.practice, ticker, shares, currentQuote.priceCents);
+  if (result.problem) {
+    message.textContent = result.problem;
+    return;
+  }
+  data.practice = result.practice;
+  saveData(data);
+  message.textContent = (kind === "buy" ? "Bought " : "Sold ") + plural(shares, "share", "shares") +
+    " of " + ticker + " at " + formatCents(currentQuote.priceCents) + " (practice money)";
+  renderPractice();
+}
+
+document.getElementById("buy-button").addEventListener("click", () => trade("buy"));
+document.getElementById("sell-button").addEventListener("click", () => trade("sell"));
+document.getElementById("trade-shares").addEventListener("input", renderTradePreview);
+
+document.getElementById("refresh-prices").addEventListener("click", async () => {
+  const message = document.getElementById("refresh-message");
+  message.textContent = "Refreshing...";
+  // One request per holding; a for...of loop with await asks one at a time
+  for (const ticker of Object.keys(data.practice.holdings)) {
+    const answer = await fetchQuote(ticker);
+    if (answer.problem) {
+      message.textContent = answer.problem;
+      return;
+    }
+    data.practice.holdings[ticker].lastPriceCents = answer.quote.priceCents;
+  }
+  saveData(data);
+  message.textContent = "Prices updated " + new Date().toLocaleTimeString();
+  renderPractice();
+});
+
+document.getElementById("reset-start").addEventListener("click", () => {
+  document.getElementById("reset-confirm").hidden = false;
+});
+document.getElementById("reset-no").addEventListener("click", () => {
+  document.getElementById("reset-confirm").hidden = true;
+});
+document.getElementById("reset-yes").addEventListener("click", () => {
+  data.practice = { cashCents: PRACTICE_START_CENTS, holdings: {} };
+  saveData(data);
+  document.getElementById("reset-confirm").hidden = true;
+  document.getElementById("trade-message").textContent = "";
+  renderPractice();
+});
 
 document.getElementById("api-key-form").addEventListener("submit", (event) => {
   event.preventDefault();
@@ -746,6 +850,8 @@ document.getElementById("quote-form").addEventListener("submit", async (event) =
   const result = document.getElementById("quote-result");
   const ticker = normalizeTicker(document.getElementById("ticker").value);
   result.hidden = true;
+  currentQuote = null;
+  document.getElementById("trade-message").textContent = "";
   if (ticker === null) {
     quoteMessage.textContent = "Type a ticker, like VOO or AAPL";
     return;
@@ -757,6 +863,12 @@ document.getElementById("quote-form").addEventListener("submit", async (event) =
     return;
   }
   const quote = answer.quote;
+  currentQuote = quote;
+  // A fresh price for something you own updates its value too
+  if (data.practice.holdings[quote.ticker]) {
+    data.practice.holdings[quote.ticker].lastPriceCents = quote.priceCents;
+    saveData(data);
+  }
   quoteMessage.textContent = "";
   document.getElementById("quote-ticker").textContent = quote.ticker;
   document.getElementById("quote-price").textContent = formatCents(quote.priceCents);
@@ -765,6 +877,7 @@ document.getElementById("quote-form").addEventListener("submit", async (event) =
     ? "Price as of " + new Date(quote.time).toLocaleString()
     : "";
   result.hidden = false;
+  renderPractice();
 });
 
 document.getElementById("month-prev").addEventListener("click", () => {

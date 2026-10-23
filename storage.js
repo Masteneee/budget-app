@@ -18,6 +18,8 @@ function emptyData() {
     // The paper trading simulator: fake money only
     practice: {
       cashCents: PRACTICE_START_CENTS,
+      // { VOO: { shares: 1, costCents: 51234, lastPriceCents: 51234 } }
+      holdings: {},
     },
     settings: {
       // null means "not set": the hours-of-work feature stays hidden

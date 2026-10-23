@@ -181,9 +181,20 @@
       investing works, not advice to buy anything.
     </section>
 
-    <section id="wallet">
-      <span class="summary-label">Practice cash</span>
-      <span id="practice-cash" class="safe-value">$1,000.00</span>
+    <section id="wallet" class="summary">
+      <div class="summary-main">
+        <span class="summary-label">Practice account total</span>
+        <span id="practice-total" class="safe-value">$1,000.00</span>
+        <span id="practice-gain" class="safe-detail"></span>
+      </div>
+      <div>
+        <span class="summary-label">Cash</span>
+        <span id="practice-cash" class="summary-value">$1,000.00</span>
+      </div>
+      <div>
+        <span class="summary-label">Investments</span>
+        <span id="practice-invested" class="summary-value">$0.00</span>
+      </div>
     </section>
 
     <section id="quote-card">
@@ -199,8 +210,35 @@
         <span id="quote-price" class="quote-price"></span>
         <span id="quote-change" class="budget-text"></span>
         <span id="quote-time" class="budget-text"></span>
+        <form id="trade-form" class="trade-form">
+          <label class="budget-label">Shares
+            <input id="trade-shares" type="text" inputmode="numeric" value="1" autocomplete="off">
+          </label>
+          <p id="trade-preview" class="budget-text"></p>
+          <div class="dialog-buttons">
+            <button type="button" id="buy-button">Buy</button>
+            <button type="button" id="sell-button" class="secondary">Sell</button>
+          </div>
+        </form>
+        <p id="trade-message" class="message" aria-live="polite"></p>
       </div>
       <p class="hint">US stocks and ETFs. Prices can be delayed and are shown in US dollars.</p>
+    </section>
+
+    <section id="holdings-card">
+      <h2>Your practice investments</h2>
+      <p id="holdings-empty" class="empty">Nothing bought yet. Look up a ticker above to practice.</p>
+      <ul id="holdings-list" class="goal-list"></ul>
+      <button type="button" id="refresh-prices" class="secondary" hidden>Refresh prices</button>
+      <p id="refresh-message" class="message" aria-live="polite"></p>
+      <button type="button" id="reset-start" class="quiet">Start over with $1,000</button>
+      <div id="reset-confirm" class="delete-confirm" hidden>
+        <p>Sell everything and reset to $1,000 of practice cash?</p>
+        <div class="dialog-buttons">
+          <button type="button" id="reset-yes">Yes, start over</button>
+          <button type="button" id="reset-no" class="secondary">Keep going</button>
+        </div>
+      </div>
     </section>
 
     <section id="api-key-card">

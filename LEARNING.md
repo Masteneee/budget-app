@@ -97,6 +97,14 @@
   prices are for US stocks and ETFs. Using $1,000 USD of fake money avoids mixing
   currencies. The budget side of the app is unaffected.
 - **Money now shows thousands separators everywhere: $1,000.00 (task 4.1).**
+- **Whole shares only in the simulator (task 4.2).** Fractional shares would put
+  decimals back into the money math. The cost: with $1,000 you can only buy 1 or
+  2 shares of pricier ETFs. Real brokers often allow fractions; that could be a
+  later upgrade.
+- **Selling part of a holding keeps its average cost the same (task 4.2).** This
+  is the "average cost" method Canadian investors use for taxes (the adjusted
+  cost base). Values use each holding's last known price, updated by a lookup or
+  by "Refresh prices". A "Start over with $1,000" button resets the simulator.
 
 ---
 
@@ -1708,5 +1716,97 @@ and look for a CORS error. That would mean we need the fallback from task 4.0.
 2. Everything in `data` goes into the backup file. A key is a secret: you might
    share or upload a backup without thinking about it. Keeping the key apart
    means backups can never leak it.
+
+</details>
+
+---
+
+## Task 4.2: Buy and sell (2026-10-23)
+
+### What we built
+
+After looking up a price, you can now trade with practice money. Type a number of
+shares and the app previews the cost ("3 shares × $100.00 = $300.00. You own 0
+shares."), then tap Buy or Sell. The top card shows your practice account total,
+your cash and your investments, plus your overall gain or loss since you started
+with $1,000. "Your practice investments" lists each holding: shares, average
+cost, last price, value and gain or loss, like "+$60.00 (+20.0%)". "Refresh
+prices" fetches new prices for everything you hold. You can't spend more cash
+than you have or sell shares you don't own; both get a plain message. "Start over
+with $1,000" resets everything after a confirm.
+
+### New concepts (investing)
+
+**Cost basis.** The total you paid for the shares you still hold. Buy 3 at $100
+and 1 at $160: cost basis $460 for 4 shares.
+
+**Average cost.** Cost basis ÷ shares = $115. It's the price your shares "cost"
+on average, and the line your gain or loss is measured from.
+
+**Unrealized vs realized gain.** If the price is now $120, your 4 shares are worth
+$480, a +$20 gain, but only on paper ("unrealized"). It becomes real ("realized")
+when you sell. Prices can move again before then.
+
+**Why selling doesn't change the average cost.** Selling 1 of 4 shares removes ¼
+of the cost basis ($115), so the 3 you keep still average $115. Your gain on the
+sold share is $120 − $115 = $5.
+
+### New concepts (code)
+
+**Returning a new object instead of changing the old one.** `buyShares` returns a
+brand new `practice` object (or a `problem`). app.js only swaps it in when there's
+no problem. A failed trade can't leave the account half-updated.
+
+**Computed property names.** `{ [ticker]: {...} }`: square brackets inside an
+object literal use the *value* of `ticker` ("VOO") as the key, not the word "ticker".
+
+**`delete`.** `delete holdings[ticker]` removes a key from an object. We do it on
+a copy (`Object.assign({}, practice.holdings)`), never on the original.
+
+**`await` inside a `for...of` loop.** "Refresh prices" asks for one ticker, waits
+for the answer, then asks for the next. That's slower than asking for all at once,
+but it's gentle on the rate limit and easy to read.
+
+**The `input` event.** Fires on every keystroke in a field. We use it to update
+the cost preview live as you type the number of shares.
+
+### Key lines of code
+
+```js
+const costRemoved = Math.round((old.costCents * shares) / old.shares);
+```
+Selling a fraction of your shares removes the same fraction of their cost.
+
+```js
+const result = kind === "buy"
+  ? buyShares(data.practice, ticker, shares, currentQuote.priceCents)
+  : sellShares(data.practice, ticker, shares, currentQuote.priceCents);
+if (result.problem) {
+  message.textContent = result.problem;
+  return;
+}
+data.practice = result.practice;
+```
+Try the trade on a copy. Only accept it if it worked.
+
+```js
+gainPercent: Math.round((gainCents / holding.costCents) * 1000) / 10,
+```
+Gain as a percent of what you paid, to one decimal (×1000, round, ÷10).
+
+### Quiz
+
+1. You buy 2 shares at $50, then 2 more at $70. What's your average cost? Then the
+   price is $65. What's your gain or loss?
+2. You sell 1 of those 4 shares at $65. What's the average cost of the 3 you keep?
+
+**Answers**
+
+<details>
+<summary>Show answers</summary>
+
+1. Cost basis = $100 + $140 = $240 for 4 shares, so the average is $60. Value at
+   $65 = $260, a gain of +$20 (+8.3%).
+2. Still $60. Selling removed ¼ of the cost ($60), leaving $180 for 3 shares.
 
 </details>

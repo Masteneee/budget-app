@@ -454,6 +454,101 @@ function describeDayChange(quote) {
   return sign + formatCents(quote.changeCents) + " (" + percentSign + percent + "%) today";
 }
 
+// ---------- Paper trading ----------
+// practice looks like:
+// { cashCents: 48766, holdings: { VOO: { shares: 1, costCents: 51234, lastPriceCents: 51234 } } }
+// costCents is the total paid for the shares still held (the "cost basis").
+
+// Whole shares only, 1 to 10000. Returns null for anything else.
+function parseShares(text) {
+  const cleaned = String(text).trim();
+  if (!/^\d+$/.test(cleaned)) {
+    return null;
+  }
+  const shares = Number(cleaned);
+  return shares >= 1 && shares <= 10000 ? shares : null;
+}
+
+// Returns { practice } with a new practice object, or { problem }.
+// The old object is never changed.
+function buyShares(practice, ticker, shares, priceCents) {
+  const costCents = shares * priceCents;
+  if (costCents > practice.cashCents) {
+    return {
+      problem: "That costs " + formatCents(costCents) + " and you have " +
+        formatCents(practice.cashCents) + " in practice cash.",
+    };
+  }
+  const old = practice.holdings[ticker] || { shares: 0, costCents: 0 };
+  const holdings = Object.assign({}, practice.holdings, {
+    [ticker]: {
+      shares: old.shares + shares,
+      costCents: old.costCents + costCents,
+      lastPriceCents: priceCents,
+    },
+  });
+  return { practice: { cashCents: practice.cashCents - costCents, holdings: holdings } };
+}
+
+function sellShares(practice, ticker, shares, priceCents) {
+  const old = practice.holdings[ticker];
+  if (!old || old.shares < shares) {
+    const owned = old ? old.shares : 0;
+    return { problem: "You own " + plural(owned, "share", "shares") + " of " + ticker + "." };
+  }
+  const holdings = Object.assign({}, practice.holdings);
+  if (old.shares === shares) {
+    delete holdings[ticker];
+  } else {
+    // Selling part of a holding removes the same fraction of its cost,
+    // so the average cost of the shares you keep doesn't change
+    const costRemoved = Math.round((old.costCents * shares) / old.shares);
+    holdings[ticker] = {
+      shares: old.shares - shares,
+      costCents: old.costCents - costRemoved,
+      lastPriceCents: priceCents,
+    };
+  }
+  return { practice: { cashCents: practice.cashCents + shares * priceCents, holdings: holdings } };
+}
+
+// Everything worth showing about one holding at a given price
+function holdingStats(holding, priceCents) {
+  const valueCents = holding.shares * priceCents;
+  const gainCents = valueCents - holding.costCents;
+  return {
+    shares: holding.shares,
+    averageCostCents: Math.round(holding.costCents / holding.shares),
+    valueCents: valueCents,
+    gainCents: gainCents,
+    // One decimal place; cost is never 0 because we only hold bought shares
+    gainPercent: Math.round((gainCents / holding.costCents) * 1000) / 10,
+  };
+}
+
+// Totals for the whole practice account, using each holding's last known price
+function portfolioStats(practice, startCents) {
+  let holdingsCents = 0;
+  for (const ticker of Object.keys(practice.holdings)) {
+    const holding = practice.holdings[ticker];
+    holdingsCents += holding.shares * holding.lastPriceCents;
+  }
+  const totalCents = practice.cashCents + holdingsCents;
+  return {
+    cashCents: practice.cashCents,
+    holdingsCents: holdingsCents,
+    totalCents: totalCents,
+    gainCents: totalCents - startCents,
+  };
+}
+
+// "+$12.00 (+2.4%)" or "-$3.00 (-1.0%)": the sign says it all, no colours
+function describeGain(gainCents, gainPercent) {
+  const sign = gainCents > 0 ? "+" : "";
+  const percentSign = gainPercent > 0 ? "+" : "";
+  return sign + formatCents(gainCents) + " (" + percentSign + gainPercent.toFixed(1) + "%)";
+}
+
 // In the browser, functions above are already global. Node has no
 // globals between files, so tests.js needs them handed over here.
 // `module` only exists in Node, which is why we check first.
@@ -495,5 +590,11 @@ if (typeof module !== "undefined") {
     normalizeTicker,
     parseQuote,
     describeDayChange,
+    parseShares,
+    buyShares,
+    sellShares,
+    holdingStats,
+    portfolioStats,
+    describeGain,
   };
 }

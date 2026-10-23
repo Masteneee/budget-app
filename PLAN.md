@@ -65,7 +65,7 @@ Educational only. Fake money. No "buy this" advice anywhere.
   Recommend one and STOP. I will choose before 4.1.
 - [x] **4.1 Simulator wallet.** A separate "Practice" tab with $1,000 of fake money.
   Search a stock or ETF by ticker and show its latest (possibly delayed) price.
-- [ ] **4.2 Buy and sell.** Buy and sell fake shares. Track holdings, average cost,
+- [x] **4.2 Buy and sell.** Buy and sell fake shares. Track holdings, average cost,
   current value and gain or loss. All math in logic.js with tests.
 - [ ] **4.3 Lesson cards.** 6 short cards: stock, ETF, diversification, fees,
   risk vs time, why "get rich quick" fails. Max 80 words each, plain language.

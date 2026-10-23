@@ -339,4 +339,70 @@ assert.strictEqual(logic.describeDayChange({ changeCents: 120, changePercent: 0.
 assert.strictEqual(logic.describeDayChange({ changeCents: -305, changePercent: -1.5 }), "-$3.05 (-1.50%) today");
 assert.strictEqual(logic.describeDayChange({ changeCents: 0, changePercent: 0 }), "$0.00 (0.00%) today");
 
+// ---------- Paper trading ----------
+
+// parseShares
+assert.strictEqual(logic.parseShares("3"), 3);
+assert.strictEqual(logic.parseShares(" 10 "), 10);
+assert.strictEqual(logic.parseShares("0"), null);
+assert.strictEqual(logic.parseShares("1.5"), null);
+assert.strictEqual(logic.parseShares("-2"), null);
+assert.strictEqual(logic.parseShares("abc"), null);
+assert.strictEqual(logic.parseShares("10001"), null);
+
+// buyShares: 3 shares at $100 from $1,000
+const startPractice = { cashCents: 100000, holdings: {} };
+const afterBuy = logic.buyShares(startPractice, "ABC", 3, 10000).practice;
+assert.deepStrictEqual(afterBuy, {
+  cashCents: 70000,
+  holdings: { ABC: { shares: 3, costCents: 30000, lastPriceCents: 10000 } },
+});
+assert.deepStrictEqual(startPractice, { cashCents: 100000, holdings: {} }); // untouched
+// Buying more at a different price: 1 more at $160, average cost becomes $115
+const afterSecondBuy = logic.buyShares(afterBuy, "ABC", 1, 16000).practice;
+assert.deepStrictEqual(afterSecondBuy.holdings.ABC, { shares: 4, costCents: 46000, lastPriceCents: 16000 });
+assert.strictEqual(afterSecondBuy.cashCents, 54000);
+// Not enough cash
+assert.strictEqual(
+  logic.buyShares(startPractice, "ABC", 11, 10000).problem,
+  "That costs $1,100.00 and you have $1,000.00 in practice cash."
+);
+// Spending exactly all the cash is allowed
+assert.strictEqual(logic.buyShares(startPractice, "ABC", 10, 10000).practice.cashCents, 0);
+
+// sellShares: sell 1 of 4 at $120, average cost stays $115
+const afterSell = logic.sellShares(afterSecondBuy, "ABC", 1, 12000).practice;
+assert.deepStrictEqual(afterSell, {
+  cashCents: 66000,
+  holdings: { ABC: { shares: 3, costCents: 34500, lastPriceCents: 12000 } },
+});
+// Selling everything removes the holding
+assert.deepStrictEqual(logic.sellShares(afterSell, "ABC", 3, 12000).practice, { cashCents: 102000, holdings: {} });
+// Can't sell what you don't have
+assert.strictEqual(logic.sellShares(afterSell, "ABC", 5, 12000).problem, "You own 3 shares of ABC.");
+assert.strictEqual(logic.sellShares(afterSell, "XYZ", 1, 12000).problem, "You own 0 shares of XYZ.");
+
+// holdingStats: 3 shares, $345 cost, now $120 each = $360, +$15 (+4.3%)
+assert.deepStrictEqual(logic.holdingStats(afterSell.holdings.ABC, 12000), {
+  shares: 3,
+  averageCostCents: 11500,
+  valueCents: 36000,
+  gainCents: 1500,
+  gainPercent: 4.3,
+});
+assert.strictEqual(logic.holdingStats({ shares: 2, costCents: 20000 }, 9000).gainCents, -2000);
+
+// portfolioStats
+assert.deepStrictEqual(logic.portfolioStats(afterSell, 100000), {
+  cashCents: 66000,
+  holdingsCents: 36000,
+  totalCents: 102000,
+  gainCents: 2000,
+});
+
+// describeGain
+assert.strictEqual(logic.describeGain(1500, 4.3), "+$15.00 (+4.3%)");
+assert.strictEqual(logic.describeGain(-2000, -10), "-$20.00 (-10.0%)");
+assert.strictEqual(logic.describeGain(0, 0), "$0.00 (0.0%)");
+
 console.log("All tests passed");

@@ -13,6 +13,20 @@
   </header>
 
   <main>
+    <section id="add-expense">
+      <h2>Add an expense</h2>
+      <!-- inputmode="decimal" shows the number keypad on phones -->
+      <input id="amount" class="amount-input" type="text" inputmode="decimal"
+             placeholder="0.00" aria-label="Amount in dollars" autocomplete="off">
+      <input id="note" type="text" placeholder="Note (optional)" aria-label="Note">
+      <label class="date-label">Date
+        <input id="date" type="date">
+      </label>
+      <p class="hint">Tap a category to save</p>
+      <div id="category-buttons" class="category-buttons"></div>
+      <p id="add-message" class="message" aria-live="polite"></p>
+    </section>
+
     <section id="this-month">
       <h2>This month</h2>
       <p id="month-empty">Nothing here yet.</p>

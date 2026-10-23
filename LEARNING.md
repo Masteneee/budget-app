@@ -10,6 +10,13 @@
   later: it appears in `<title>` and `<h1>` in `index.html`.
 - **The first test checks a real function (`formatCents`) instead of `1 + 1 === 2`.**
   It costs four lines and proves that tests.js can actually load logic.js.
+- **Tapping a category button saves the expense (task 1.1).** No separate "Save"
+  button: type the amount, tap "Food", done. That's the fastest flow for the
+  "under 5 seconds" goal. The note goes above the buttons so you fill it first.
+- **Commas count as decimal marks (task 1.1).** "12,50" and "12.50" both mean
+  $12.50, because French keyboards in Quebec often use a comma.
+- **Amounts allow at most 2 decimals and must be above zero (task 1.1).** "1.234"
+  is rejected instead of being rounded silently.
 
 ---
 
@@ -130,5 +137,101 @@ a 980px-wide desktop and shrink everything.
    scripts are shared as globals. `tests.js` runs in Node, where every file is
    sealed off. Node only shares what a file puts in `module.exports`, and you
    get it with `require`.
+
+</details>
+
+---
+
+## Task 1.1: Add an expense (2026-10-23)
+
+### What we built
+
+A form at the top of the page. The cursor starts in the big amount box, so you
+can type right away. Below it there's an optional note, a date (already set to
+today), and six category buttons. Tapping a category saves the expense and shows
+"Saved $12.50 in Food". The form then clears itself for the next one. If the
+amount is empty or not a number, a calm message asks for one instead. Everything
+is saved in the browser's localStorage, so it's still there after a reload. The
+list of expenses comes in task 1.2.
+
+### New concepts
+
+**The DOM.** When the browser reads your HTML, it builds a tree of objects in
+memory, one per element. That tree is the DOM (Document Object Model).
+`document.getElementById("amount")` hands you the object for
+`<input id="amount">`, and changing its `.value` or `.textContent` changes
+what's on screen.
+
+**Event listener.** A function you hand to the browser saying "call this when X
+happens". `button.addEventListener("click", ...)` means "when this button is
+clicked, run this". Your code doesn't wait in a loop; the browser calls you.
+
+**Arrow function.** `() => addExpense(category)` is a short way to write a small
+function. We need a function here (not `addExpense(category)` directly) because
+we want the code to run *later*, on click, not right now while building buttons.
+
+**localStorage.** A small storage box inside the browser, separate for each site.
+It survives reloads and closing the browser, but it only holds text. So we turn
+our data into text with `JSON.stringify` before saving, and back into objects
+with `JSON.parse` when loading.
+
+**JSON.** A text format that looks like JavaScript objects:
+`{"amountCents":1250,"category":"Food"}`. Nearly every language can read it.
+
+**Regular expression (regex).** A mini-language for describing text patterns.
+`/^\d+(\.\d{1,2})?$/` reads as: start (`^`), one or more digits (`\d+`),
+then optionally (`?`) a dot and 1 or 2 digits, then the end (`$`).
+
+**try / catch.** Code inside `try` runs normally. If it throws an error, instead
+of crashing the page, the code inside `catch` runs. We use it because saved data
+could be broken, or storage could be blocked in private browsing.
+
+### Key lines of code
+
+```js
+const cents = parts.length > 1 ? Number(parts[1].padEnd(2, "0")) : 0;
+```
+In "12.5", the part after the dot is "5", which means 50 cents, not 5. `padEnd(2, "0")`
+turns "5" into "50". The `? :` is a short if/else (the "ternary operator"):
+`condition ? valueIfTrue : valueIfFalse`.
+
+```js
+return Object.assign(emptyData(), saved);
+```
+Starts from a blank data object and copies the saved fields over it. If a future
+version adds a new field (like `goals`), old saves still get a default for it.
+
+```js
+button.addEventListener("click", () => addExpense(category));
+```
+Each button remembers its own `category`. This works because `const category`
+inside a `for...of` loop is a fresh variable on each turn of the loop.
+
+```js
+const month = String(date.getMonth() + 1).padStart(2, "0");
+```
+JavaScript counts months from 0 (January is 0), so we add 1. `padStart` turns
+"5" into "05" so dates sort correctly as text.
+
+### Quiz
+
+1. Why do we parse "12.5" by splitting the text instead of doing
+   `Math.round(parseFloat("12.5") * 100)`?
+2. If you remove `amountInput.focus()` at the end of `addExpense`, what would
+   change for someone logging 3 expenses in a row?
+
+**Answers**
+
+<details>
+<summary>Show answers</summary>
+
+1. The split version never touches decimals, so it's exact by construction and
+   easy to reason about. `parseFloat` returns a binary decimal that's slightly
+   off (for example `1.005 * 100` gives `100.49999999999999`), and you have to
+   remember to round correctly every time. Splitting also lets us reject "1.234"
+   instead of rounding it silently.
+2. After tapping a category, the focus would stay on the button. They'd have to
+   tap the amount box again before typing each new expense. That's one extra tap
+   per expense, which works against the "under 5 seconds" goal.
 
 </details>

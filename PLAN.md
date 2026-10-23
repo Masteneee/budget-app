@@ -59,7 +59,7 @@ Goal: adding an expense takes under 5 seconds.
 
 Educational only. Fake money. No "buy this" advice anywhere.
 
-- [ ] **4.0 Choose a data source.** Research free stock-price APIs. Compare 2 or 3
+- [x] **4.0 Choose a data source.** Research free stock-price APIs. Compare 2 or 3
   options in LEARNING.md: free limits, whether it needs a key, whether it can be
   called from a browser, and the risk of putting a key in public code.
   Recommend one and STOP. I will choose before 4.1.

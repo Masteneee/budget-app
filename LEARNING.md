@@ -87,6 +87,9 @@
   month. It applies to every budgeted category (Bills included, so "safe to spend"
   uses the rolled-over Bills amount too). Since budgets have no history, past
   months are calculated with today's budget amounts.
+- **Task 4.0 recommends Finnhub, with the API key typed into the app's Settings by
+  the user and kept in localStorage, never written in the code (task 4.0).**
+  Final choice is yours before 4.1. See the task 4.0 section below.
 
 ---
 
@@ -1480,5 +1483,118 @@ Nothing to carry in the start month itself, or when rollover is off.
    you'd used the app for a year before turning rollover on, a year of "unspent"
    budget (that you never planned) would suddenly appear. Starting the month you
    turn it on matches what you'd expect.
+
+</details>
+
+---
+
+## Task 4.0: Choose a data source (2026-10-23)
+
+### What we did
+
+No code this time: this was research. The practice simulator (Phase 4) needs
+stock and ETF prices from somewhere. We compared three free stock-price services
+(APIs) on four questions: how much can you use for free, do you need a key, can
+a web page call it directly, and what happens if the key ends up in public code.
+The answer: Finnhub (recommended), with one important rule about where the key
+lives. **You choose before task 4.1.**
+
+### New concepts
+
+**API (Application Programming Interface).** A way for one program to ask
+another for data. Here, our app sends a web address like
+`.../quote?symbol=AAPL&token=YOUR_KEY` and gets back JSON with the price.
+
+**API key.** A secret string that identifies you to the service, like a library
+card. It lets them count your requests (rate limits) and block abuse.
+
+**Rate limit.** How many requests you're allowed in a time window (per minute,
+per day). Go over, and the API answers with an error until the window resets.
+
+**CORS (Cross-Origin Resource Sharing).** Browsers block a page on one website
+(like `masteneee.github.io`) from reading responses from another website (like
+an API), *unless* that API sends a header saying "any website may read me"
+(`Access-Control-Allow-Origin`). Our app has no server, so it can only use APIs
+that send this header. A server-to-server call doesn't have this rule; it's a
+browser safety feature.
+
+**Why a key in public code is a problem.** The repo is public and the site is on
+GitHub Pages, so anything in `app.js` can be read by anyone (View Source works).
+Bots scan GitHub for keys all day. Someone who copies your key can use up your
+free requests (the simulator stops working for you) or get the key banned. With
+a free plan there's no bill to run up, but it's still your account.
+
+### Comparison
+
+Facts are from third-party summaries dated 2026, because the providers' own
+pages couldn't be reached from the research environment. Free tiers change
+often, so check the official pricing pages before signing up.
+
+| | **Finnhub** | **Alpha Vantage** | **Twelve Data** |
+|---|---|---|---|
+| Free limit | ~60 requests / minute | 25 requests / **day** | 8 / minute, 800 / day |
+| Key needed? | Yes (free, no credit card) | Yes (free) | Yes (free) |
+| Quote endpoint free? | Yes: price, change, open, high, low | Yes (`GLOBAL_QUOTE`) | Yes (`/quote`) |
+| Markets on free plan | US stocks and ETFs | Stocks and ETFs; real-time US data is paid-only | US stocks, forex, crypto |
+| Browser calls (CORS) | Reported yes, but sources conflict | Commonly used from browsers; not confirmed | Sources conflict; one check found no CORS headers |
+| Licence | Personal, non-commercial | Free for personal use | "Evaluation and development" |
+| Main weakness | US only, CORS needs a quick check | 25/day runs out after a few searches | Licence is meant for testing, and CORS is unclear |
+
+### Recommendation: Finnhub
+
+1. **Its limits fit a practice simulator.** Looking up a ticker and refreshing a
+   few holdings might be 10 to 20 calls in a session. Finnhub's 60 per minute
+   covers that easily. Alpha Vantage's 25 per *day* would run out on day one.
+2. **Its free licence matches this app** (personal and educational), unlike Twelve
+   Data's "evaluation" licence.
+3. **US stocks and ETFs are enough to learn the concepts** (stocks, ETFs,
+   diversification) that the lesson cards (4.3) cover.
+
+**How to handle the key: you type it in, it's never in the code.** Settings gets
+a "Finnhub API key" box. The key is saved in your browser's localStorage (through
+storage.js), so it never appears in the repo or on GitHub Pages. Anyone else
+using your published site would need their own free key. This turns the public-code
+risk into zero risk, with no server needed.
+
+**First step of 4.1, because CORS sources disagree:** one request from the
+browser to confirm Finnhub sends the CORS header. If it doesn't, the fallback is
+Alpha Vantage with results cached in localStorage for the day, so a ticker you
+already looked up doesn't spend another request.
+
+**Not chosen, but worth knowing:** Yahoo Finance's unofficial endpoints need no
+key, but they block browser calls (no CORS) and can break without notice.
+
+### Sources
+
+- [Finnhub free tier summary (apicostcalc, 2026)](https://apicostcalc.com/finnhub.html)
+- [Finance::Quote Finnhub module docs (free limits, personal use)](https://metacpan.org/pod/Finance::Quote::Finnhub)
+- [Finnhub free tier capabilities (2026)](https://github.com/RaquazaCode/Fintech-AI-SaaS-Using-Google-Antigravity-Skills-Stitch/blob/main/Finnhub%20API%20Free%20Tier%20Capabilities%20(2026).docx.md)
+- [Finnhub API listing (CORS example)](https://www.freeapisforyou.in/api/finnhub)
+- [Alpha Vantage pricing and free tier (apicostcalc, 2026)](https://apicostcalc.com/alpha-vantage.html)
+- [Alpha Vantage pricing 2026 (QVeris)](https://qveris.ai/guides/alpha-vantage-pricing-alternative/?lang=en)
+- [Alpha Vantage rate limits (apis.io)](https://apis.io/rate-limits/alpha-vantage/alpha-vantage-rate-limits/)
+- [Twelve Data review and pricing](https://stockmarketstack.com/tools/twelve-data)
+- [Twelve Data CORS check (shipapis)](https://shipapis.dev/api/twelve-data)
+- [Twelve Data API documentation](https://twelvedata.com/docs)
+- [Fetch: Cross-Origin Requests (javascript.info)](https://javascript.info/fetch-crossorigin)
+
+### Quiz
+
+1. Your Finnhub key is in `app.js` and the repo is public. Name two things a
+   stranger could do with it.
+2. Why can't our app just call an API that doesn't send CORS headers, even
+   though `curl` on a computer can?
+
+**Answers**
+
+<details>
+<summary>Show answers</summary>
+
+1. Use up your free request limit (your simulator stops working), and get your
+   key or account blocked for abuse. On a paid plan, they could also run up a bill.
+2. CORS is enforced by the browser, to stop one website from reading data from
+   another without permission. `curl` isn't a browser, so it doesn't apply the
+   rule. Our app only runs in a browser and has no server of its own to make the
+   call for it.
 
 </details>

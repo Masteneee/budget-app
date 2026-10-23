@@ -9,6 +9,10 @@ assert.strictEqual(logic.formatCents(1250), "$12.50");
 assert.strictEqual(logic.formatCents(0), "$0.00");
 assert.strictEqual(logic.formatCents(-500), "-$5.00");
 assert.strictEqual(logic.formatCents(5), "$0.05");
+assert.strictEqual(logic.formatCents(100000), "$1,000.00");
+assert.strictEqual(logic.formatCents(123456789), "$1,234,567.89");
+assert.strictEqual(logic.formatCents(-100000), "-$1,000.00");
+assert.strictEqual(logic.formatCents(99999), "$999.99");
 
 // parseAmountToCents
 assert.strictEqual(logic.parseAmountToCents("12"), 1200);
@@ -304,5 +308,35 @@ assert.deepStrictEqual(logic.effectiveBudgets(rollEntries, baseBudgets, "2026-08
 assert.deepStrictEqual(logic.effectiveBudgets(rollEntries, baseBudgets, "2026-10", null).budgets, baseBudgets);
 // Works across a year boundary
 assert.strictEqual(logic.effectiveBudgets([], { Fun: 5000 }, "2027-02", "2026-12").budgets.Fun, 15000);
+
+// normalizeTicker
+assert.strictEqual(logic.normalizeTicker(" aapl "), "AAPL");
+assert.strictEqual(logic.normalizeTicker("brk.b"), "BRK.B");
+assert.strictEqual(logic.normalizeTicker("VFV"), "VFV");
+assert.strictEqual(logic.normalizeTicker(""), null);
+assert.strictEqual(logic.normalizeTicker("123"), null);
+assert.strictEqual(logic.normalizeTicker("AAPL; DROP"), null);
+assert.strictEqual(logic.normalizeTicker("ABCDEFGHIJK"), null);
+
+// parseQuote: shape of Finnhub's /quote answer
+const finnhubAnswer = { c: 189.43, d: 1.2, dp: 0.6377, h: 190, l: 187.5, o: 188, pc: 188.23, t: 1761249600 };
+assert.deepStrictEqual(logic.parseQuote("AAPL", finnhubAnswer), {
+  ticker: "AAPL",
+  priceCents: 18943,
+  changeCents: 120,
+  changePercent: 0.6377,
+  time: 1761249600000,
+});
+// Unknown ticker: Finnhub sends zeros
+assert.strictEqual(logic.parseQuote("ZZZZ", { c: 0, d: null, dp: null, h: 0, l: 0, o: 0, pc: 0, t: 0 }), null);
+assert.strictEqual(logic.parseQuote("AAPL", { error: "Invalid API key" }), null);
+assert.strictEqual(logic.parseQuote("AAPL", null), null);
+// 0.1 + 0.2 style trouble: 19.99 * 100 is 1998.9999999999998, rounding fixes it
+assert.strictEqual(logic.parseQuote("X", { c: 19.99 }).priceCents, 1999);
+
+// describeDayChange
+assert.strictEqual(logic.describeDayChange({ changeCents: 120, changePercent: 0.6377 }), "+$1.20 (+0.64%) today");
+assert.strictEqual(logic.describeDayChange({ changeCents: -305, changePercent: -1.5 }), "-$3.05 (-1.50%) today");
+assert.strictEqual(logic.describeDayChange({ changeCents: 0, changePercent: 0 }), "$0.00 (0.00%) today");
 
 console.log("All tests passed");

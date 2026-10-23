@@ -90,6 +90,13 @@
 - **Task 4.0 recommends Finnhub, with the API key typed into the app's Settings by
   the user and kept in localStorage, never written in the code (task 4.0).**
   Final choice is yours before 4.1. See the task 4.0 section below.
+- **Data source: Finnhub, chosen by you after task 4.0 (task 4.1).** The key is
+  saved under its own localStorage key (`budgetApp.finnhubKey`), outside the main
+  data, so it is never in backup files or the code.
+- **The practice wallet counts in US dollars (task 4.1)**, because Finnhub's free
+  prices are for US stocks and ETFs. Using $1,000 USD of fake money avoids mixing
+  currencies. The budget side of the app is unaffected.
+- **Money now shows thousands separators everywhere: $1,000.00 (task 4.1).**
 
 ---
 
@@ -1596,5 +1603,110 @@ key, but they block browser calls (no CORS) and can break without notice.
    another without permission. `curl` isn't a browser, so it doesn't apply the
    rule. Our app only runs in a browser and has no server of its own to make the
    call for it.
+
+</details>
+
+---
+
+## Task 4.1: Simulator wallet (2026-10-23)
+
+### What we built
+
+The header now has two tabs: "Budget" (everything from before) and "Practice".
+The Practice tab opens with a soft banner: "Fake money, real prices. This is for
+learning how investing works, not advice to buy anything." Below it, your
+practice cash: $1,000.00 of fake money. A "Look up a price" box takes a ticker
+like VOO or AAPL and shows its latest price from Finnhub, how much it moved today,
+and when that price is from. At the bottom, you paste your free Finnhub key once.
+It stays in your browser only. Every problem (no key, wrong key, unknown ticker,
+too many lookups, no internet) gets its own calm sentence explaining what to do.
+
+### New concepts
+
+**`fetch`.** The browser's built-in way to request a web address from JavaScript.
+`await fetch(url)` sends the request and waits for the response without freezing
+the page. `response.status` is the HTTP status code (200 OK, 401 not allowed,
+429 too many requests), and `await response.json()` reads the body as JSON.
+
+**HTTP status codes.** Three-digit codes in every web response: 2xx means success,
+4xx means the request had a problem (401/403: bad key, 404: not found, 429: rate
+limit), 5xx means the server had a problem. We check the specific ones we can
+explain in plain words.
+
+**When `fetch` throws vs when it doesn't.** A 401 or 429 is still an *answer*,
+so `fetch` doesn't throw; we check `response.status`. `fetch` only throws when
+no answer arrives at all: offline, DNS failure, or the browser blocking it because
+of CORS. That's why the `catch` message is about reaching Finnhub.
+
+**Returning `{ quote }` or `{ problem }`.** `fetchQuote` can end in many ways. It
+returns an object with either a `quote` or a `problem` sentence, so the caller
+just checks `if (answer.problem)`. Every failure becomes a message for the user,
+never a crash.
+
+**`encodeURIComponent`.** Web addresses have special characters (`&`, `?`, `=`,
+spaces). This function escapes them so a ticker or key can't break the URL.
+
+**Keeping a secret out of shared files.** The key is stored under a *separate*
+localStorage key, so `saveData` and the backup export never touch it. If you
+share a backup with someone, your key doesn't go with it. `type="password"`
+hides it on screen too.
+
+**Tabs with ARIA.** `role="tablist"`, `role="tab"`, `aria-selected` and
+`role="tabpanel"` tell screen readers these buttons switch between views.
+Switching is just showing one `<main>` and hiding the other with `hidden`.
+
+**A regex with a lookahead (the commas).** `/\B(?=(\d{3})+(?!\d))/g` finds every
+position that's inside the number (`\B`) and followed by one or more groups of
+exactly three digits until the end (`(?=...)` checks ahead without consuming).
+A comma goes in each of those spots. Regexes like this are hard to read, which is
+exactly why it has a comment and five tests.
+
+### Key lines of code
+
+```js
+if (!json || typeof json.c !== "number" || json.c <= 0) {
+  return null;
+}
+```
+Finnhub answers an unknown ticker with `c: 0` (price zero) instead of an error.
+Reading the API's real behaviour, not just the happy path, is half the work.
+
+```js
+priceCents: Math.round(json.c * 100),
+```
+Prices arrive as decimals (189.43). We convert to cents once, at the boundary,
+and `Math.round` cleans up tiny float errors (19.99 × 100 = 1998.9999999999998).
+
+```js
+} catch (error) {
+  return { problem: "Couldn't reach Finnhub. Check your internet connection and try again." };
+}
+```
+No answer at all becomes a calm sentence.
+
+### Check this in your browser
+
+My test environment couldn't reach Finnhub, so the tests used fake answers in
+the same format. With your real key, look up `VOO`. If you see a price, CORS
+works. If you see "Couldn't reach Finnhub" while online, open the Console (F12)
+and look for a CORS error. That would mean we need the fallback from task 4.0.
+
+### Quiz
+
+1. You type a wrong key and look up VOO. Does `fetch` throw? Which message appears?
+2. Why is the Finnhub key stored under a separate localStorage key instead of
+   inside `data.settings` like the hourly wage?
+
+**Answers**
+
+<details>
+<summary>Show answers</summary>
+
+1. No. Finnhub still answers, just with status 401, so `fetch` succeeds and we
+   check `response.status`. The message is "Finnhub didn't accept that key. Check
+   it in Price data below."
+2. Everything in `data` goes into the backup file. A key is a secret: you might
+   share or upload a backup without thinking about it. Keeping the key apart
+   means backups can never leak it.
 
 </details>

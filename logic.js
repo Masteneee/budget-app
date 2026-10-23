@@ -15,7 +15,10 @@ function formatCents(cents) {
   // The minus goes before the "$": -$5.00, not $-5.00
   const sign = cents < 0 ? "-" : "";
   const dollars = (Math.abs(cents) / 100).toFixed(2);
-  return sign + "$" + dollars;
+  // Commas every 3 digits before the dot: 1234567.89 -> 1,234,567.89.
+  // The pattern finds spots followed by groups of exactly 3 digits.
+  const withCommas = dollars.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return sign + "$" + withCommas;
 }
 
 // Turns what the user typed ("12", "12.5", "12,50") into cents (1250).
@@ -419,6 +422,38 @@ function checkBackup(backup) {
   return problems;
 }
 
+// " aapl " -> "AAPL". Returns null for anything that can't be a ticker.
+// Tickers are 1 to 10 letters or digits, sometimes with "." or "-" (BRK.B).
+function normalizeTicker(text) {
+  const ticker = String(text).trim().toUpperCase();
+  return /^[A-Z][A-Z0-9.-]{0,9}$/.test(ticker) ? ticker : null;
+}
+
+// Turns Finnhub's /quote answer into our own shape, in cents.
+// Finnhub answers an unknown ticker with all zeros instead of an error,
+// so a price of 0 means "not found" (returns null).
+function parseQuote(ticker, json) {
+  if (!json || typeof json.c !== "number" || json.c <= 0) {
+    return null;
+  }
+  return {
+    ticker: ticker,
+    priceCents: Math.round(json.c * 100),
+    changeCents: Math.round((json.d || 0) * 100),
+    changePercent: json.dp || 0,
+    // Finnhub gives seconds since 1970; JavaScript dates use milliseconds
+    time: json.t ? json.t * 1000 : null,
+  };
+}
+
+// "+$1.20 (+0.64%) today". The sign is shown either way, no colours.
+function describeDayChange(quote) {
+  const sign = quote.changeCents > 0 ? "+" : "";
+  const percent = quote.changePercent.toFixed(2);
+  const percentSign = quote.changePercent > 0 ? "+" : "";
+  return sign + formatCents(quote.changeCents) + " (" + percentSign + percent + "%) today";
+}
+
 // In the browser, functions above are already global. Node has no
 // globals between files, so tests.js needs them handed over here.
 // `module` only exists in Node, which is why we check first.
@@ -457,5 +492,8 @@ if (typeof module !== "undefined") {
     CATEGORY_GROUPS,
     fiftyThirtyTwenty,
     effectiveBudgets,
+    normalizeTicker,
+    parseQuote,
+    describeDayChange,
   };
 }

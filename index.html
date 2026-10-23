@@ -10,9 +10,14 @@
 <body>
   <header>
     <h1>Budget App</h1>
+    <!-- role="tablist" / "tab" tell screen readers these switch views -->
+    <div class="tabs" role="tablist">
+      <button type="button" role="tab" id="tab-budget" aria-selected="true" aria-controls="budget-tab">Budget</button>
+      <button type="button" role="tab" id="tab-practice" aria-selected="false" aria-controls="practice-tab">Practice</button>
+    </div>
   </header>
 
-  <main>
+  <main id="budget-tab" role="tabpanel" aria-labelledby="tab-budget">
     <nav class="month-switcher" aria-label="Choose a month">
       <button type="button" id="month-prev" class="secondary" aria-label="Previous month">&#9664;</button>
       <span id="month-label" class="month-label"></span>
@@ -167,6 +172,48 @@
           <button type="button" id="import-no" class="secondary">Cancel</button>
         </div>
       </div>
+    </section>
+  </main>
+
+  <main id="practice-tab" role="tabpanel" aria-labelledby="tab-practice" hidden>
+    <section class="practice-banner">
+      <strong>Practice mode.</strong> Fake money, real prices. This is for learning how
+      investing works, not advice to buy anything.
+    </section>
+
+    <section id="wallet">
+      <span class="summary-label">Practice cash</span>
+      <span id="practice-cash" class="safe-value">$1,000.00</span>
+    </section>
+
+    <section id="quote-card">
+      <h2>Look up a price</h2>
+      <form id="quote-form" class="goal-add">
+        <input id="ticker" type="text" placeholder="Ticker, e.g. VOO" aria-label="Ticker symbol"
+               autocomplete="off" autocapitalize="characters" spellcheck="false">
+        <button type="submit">Get price</button>
+      </form>
+      <p id="quote-message" class="message" aria-live="polite"></p>
+      <div id="quote-result" class="quote-result" hidden>
+        <span id="quote-ticker" class="goal-name"></span>
+        <span id="quote-price" class="quote-price"></span>
+        <span id="quote-change" class="budget-text"></span>
+        <span id="quote-time" class="budget-text"></span>
+      </div>
+      <p class="hint">US stocks and ETFs. Prices can be delayed and are shown in US dollars.</p>
+    </section>
+
+    <section id="api-key-card">
+      <h2>Price data</h2>
+      <p class="hint">Prices come from Finnhub. Get a free key at
+        <a href="https://finnhub.io/register" target="_blank" rel="noopener">finnhub.io/register</a>
+        and paste it here. It's saved only in this browser and is never included in backups.</p>
+      <form id="api-key-form">
+        <input id="api-key" type="password" placeholder="Finnhub API key" aria-label="Finnhub API key"
+               autocomplete="off" spellcheck="false">
+        <button type="submit">Save key</button>
+        <p id="api-key-message" class="message" aria-live="polite"></p>
+      </form>
     </section>
   </main>
 

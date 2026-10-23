@@ -676,6 +676,97 @@ document.getElementById("import-no").addEventListener("click", () => {
   backupMessage.textContent = "Nothing was changed.";
 });
 
+// ---------- Tabs ----------
+
+function showTab(name) {
+  const isPractice = name === "practice";
+  document.getElementById("budget-tab").hidden = isPractice;
+  document.getElementById("practice-tab").hidden = !isPractice;
+  document.getElementById("tab-budget").setAttribute("aria-selected", String(!isPractice));
+  document.getElementById("tab-practice").setAttribute("aria-selected", String(isPractice));
+  if (isPractice) {
+    renderPractice();
+  }
+}
+
+document.getElementById("tab-budget").addEventListener("click", () => showTab("budget"));
+document.getElementById("tab-practice").addEventListener("click", () => showTab("practice"));
+
+// ---------- Practice (paper trading) ----------
+
+const apiKeyInput = document.getElementById("api-key");
+const quoteMessage = document.getElementById("quote-message");
+
+function renderPractice() {
+  document.getElementById("practice-cash").textContent = formatCents(data.practice.cashCents);
+}
+
+document.getElementById("api-key-form").addEventListener("submit", (event) => {
+  event.preventDefault();
+  const key = apiKeyInput.value.trim();
+  saveApiKey(key);
+  document.getElementById("api-key-message").textContent = key ? "Key saved in this browser" : "Key removed";
+});
+
+// Asks Finnhub for the latest price. Returns { quote } or { problem }.
+// async because the answer comes back over the internet, later.
+async function fetchQuote(ticker) {
+  const key = loadApiKey();
+  if (!key) {
+    return { problem: "Add your free Finnhub key below to look up prices." };
+  }
+  // encodeURIComponent makes the text safe to put inside a web address
+  const url = "https://finnhub.io/api/v1/quote?symbol=" + encodeURIComponent(ticker) +
+    "&token=" + encodeURIComponent(key);
+  let response;
+  try {
+    response = await fetch(url);
+  } catch (error) {
+    // fetch only throws when no answer arrives: offline, or blocked by CORS
+    return { problem: "Couldn't reach Finnhub. Check your internet connection and try again." };
+  }
+  if (response.status === 401 || response.status === 403) {
+    return { problem: "Finnhub didn't accept that key. Check it in Price data below." };
+  }
+  if (response.status === 429) {
+    return { problem: "That's a lot of lookups in one minute. Wait a moment and try again." };
+  }
+  if (!response.ok) {
+    return { problem: "Finnhub had a problem (error " + response.status + "). Try again later." };
+  }
+  const quote = parseQuote(ticker, await response.json());
+  if (quote === null) {
+    return { problem: "No price found for " + ticker + ". Check the ticker (US stocks and ETFs only)." };
+  }
+  return { quote: quote };
+}
+
+document.getElementById("quote-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const result = document.getElementById("quote-result");
+  const ticker = normalizeTicker(document.getElementById("ticker").value);
+  result.hidden = true;
+  if (ticker === null) {
+    quoteMessage.textContent = "Type a ticker, like VOO or AAPL";
+    return;
+  }
+  quoteMessage.textContent = "Looking up " + ticker + "...";
+  const answer = await fetchQuote(ticker);
+  if (answer.problem) {
+    quoteMessage.textContent = answer.problem;
+    return;
+  }
+  const quote = answer.quote;
+  quoteMessage.textContent = "";
+  document.getElementById("quote-ticker").textContent = quote.ticker;
+  document.getElementById("quote-price").textContent = formatCents(quote.priceCents);
+  document.getElementById("quote-change").textContent = describeDayChange(quote);
+  document.getElementById("quote-time").textContent = quote.time
+    ? "Price as of " + new Date(quote.time).toLocaleString()
+    : "";
+  result.hidden = false;
+});
+
 document.getElementById("month-prev").addEventListener("click", () => {
   viewMonth = shiftMonth(viewMonth, -1);
   render();
@@ -690,6 +781,7 @@ typeIncomeButton.addEventListener("click", () => setAddType("income"));
 
 renderCategoryButtons();
 renderBudgetInputs();
+apiKeyInput.value = loadApiKey();
 fillSettingsForm();
 dateInput.value = toDateString(new Date());
 render();

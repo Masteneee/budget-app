@@ -63,7 +63,7 @@ Educational only. Fake money. No "buy this" advice anywhere.
   options in LEARNING.md: free limits, whether it needs a key, whether it can be
   called from a browser, and the risk of putting a key in public code.
   Recommend one and STOP. I will choose before 4.1.
-- [ ] **4.1 Simulator wallet.** A separate "Practice" tab with $1,000 of fake money.
+- [x] **4.1 Simulator wallet.** A separate "Practice" tab with $1,000 of fake money.
   Search a stock or ETF by ticker and show its latest (possibly delayed) price.
 - [ ] **4.2 Buy and sell.** Buy and sell fake shares. Track holdings, average cost,
   current value and gain or loss. All math in logic.js with tests.

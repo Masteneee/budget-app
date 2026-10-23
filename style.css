@@ -538,3 +538,52 @@ details summary {
 #settings > .radio {
   color: var(--text);
 }
+
+/* Tabs sit in the green header, under the title */
+.tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  margin-top: 12px;
+  max-width: 400px;
+}
+
+.tabs button {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.tabs button[aria-selected="true"] {
+  background: #ffffff;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* Explanatory, not alarming: soft background, normal text colour */
+.practice-banner {
+  background: #e9f1ee;
+  color: var(--text);
+}
+
+#wallet {
+  display: flex;
+  flex-direction: column;
+}
+
+.quote-result {
+  display: flex;
+  flex-direction: column;
+  margin-top: 8px;
+}
+
+.quote-result[hidden] {
+  display: none;
+}
+
+.quote-price {
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+#api-key-form button {
+  width: 100%;
+}

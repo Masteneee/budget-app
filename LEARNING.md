@@ -75,6 +75,13 @@
     current month. With no income logged, it asks you to add income instead.
 - **"Left this month" got smaller (task 3.3).** "Safe to spend" is now the one
   big number at the top.
+- **50/30/20 groups (task 3.4):** Needs = Food, Transport, School, Bills. Wants =
+  Fun, Other. Savings = money put into goals that month. Food counts as a need
+  even though restaurants are really wants; splitting Food would need a new
+  category, which is more than this task asks for.
+- **Budget style saves instantly when you tap a choice (task 3.4).** The default
+  is "Simple". In 50/30/20 mode, going past the savings target is good, so the
+  savings bar never uses the "over" colour.
 
 ---
 
@@ -1305,5 +1312,91 @@ Never negative, and rounded down to whole cents.
 2. To stay pure and testable. With `new Date()` inside, the result would change
    every day, and the tests would pass today and fail tomorrow. Passing it in
    lets tests use a fixed date.
+
+</details>
+
+---
+
+## Task 3.4: Budget styles (2026-10-23)
+
+### What we built
+
+Settings now has a "Budget style" choice: "Simple: just track" (the default,
+which changes nothing) or "50/30/20". Under the choice, two sentences explain the
+rule. Choosing 50/30/20 saves right away and shows a new card, "50/30/20 this
+month", with three rows: Needs (50%), Wants (30%) and Savings (20%). Each shows
+what you actually spent or saved, a bar, and the target based on this month's
+income ($1,000 income gives targets of $500, $300 and $200). Savings counts money
+you put into goals that month. Without income, the card asks you to add it.
+
+### The 50/30/20 rule, in short
+
+It's a popular rule of thumb from personal finance: after tax, put about half
+your income toward things you need, under a third toward things you want, and a
+fifth toward savings. It's simple enough to remember, which is its main
+strength. For a student with low income and few fixed costs, the numbers can look
+very different, and that's fine.
+
+### New concepts
+
+**Radio buttons.** `<input type="radio">` with the same `name` form a group where
+only one can be chosen. `radio.checked` reads or sets whether it's chosen. The
+`change` event fires when the user picks it.
+
+**`<fieldset>` and `<legend>`.** They group related inputs and give the group a
+title. Screen readers announce "Budget style, radio group" so the options make
+sense on their own.
+
+**A lookup table for grouping.** `CATEGORY_GROUPS = { Food: "needs", ... }` maps
+each category to its group. `spent[CATEGORY_GROUPS[entry.category] || "wants"]`
+adds the amount to the right group. The `|| "wants"` is a safety net for any
+category not in the table.
+
+**Testing an assumption, not just a function.** The loop in tests.js checks that
+every expense category has a group. If someone adds a new category later and
+forgets the table, the test fails with a clear message instead of the app silently
+mis-counting money.
+
+**A small helper inside a function.** `const group = (key, label, ...) => ({...})`
+is an arrow function defined inside `fiftyThirtyTwenty`, used three times to avoid
+repeating the same object shape. It only exists inside that function.
+
+**`accent-color`.** A modern CSS property that recolours built-in controls like
+radios and checkboxes with one line.
+
+### Key lines of code
+
+```js
+spent[CATEGORY_GROUPS[entry.category] || "wants"] += entry.amountCents;
+```
+Find the group name, then add to that group's total. Square brackets let us use
+a variable as the key.
+
+```js
+targetCents: Math.floor((incomeCents * percent) / 100),
+```
+Multiply first, then divide, to keep the math in whole cents as long as
+possible, and round down so targets never add up to more than the income.
+
+```js
+const isOver = group.key !== "savings" && group.actualCents > group.targetCents;
+```
+Saving more than 20% isn't "over" anything, it's a win, so it never gets the
+over colour.
+
+### Quiz
+
+1. Your income this month is $640. What are the three targets?
+2. Why does the test loop over `EXPENSE_CATEGORIES` instead of just testing
+   `CATEGORY_GROUPS.Food`?
+
+**Answers**
+
+<details>
+<summary>Show answers</summary>
+
+1. Needs $320.00, Wants $192.00, Savings $128.00.
+2. To catch the future mistake of adding a category to `EXPENSE_CATEGORIES`
+   without giving it a group. A single check would only prove Food works.
 
 </details>

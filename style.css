@@ -498,3 +498,38 @@ details summary {
   color: var(--muted);
   font-size: 0.9rem;
 }
+
+.rule-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.style-choice {
+  border: 1px solid #e8e6df;
+  border-radius: 8px;
+  margin: 0 0 16px;
+  padding: 8px 12px;
+}
+
+.style-choice legend {
+  color: var(--muted);
+  padding: 0 4px;
+}
+
+/* Radio rows are full-width and thumb-sized, like the buttons */
+.radio {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  cursor: pointer;
+}
+
+.radio input {
+  width: 22px;
+  min-height: 22px;
+  height: 22px;
+  margin: 0;
+  accent-color: var(--accent);
+}

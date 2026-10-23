@@ -312,6 +312,53 @@ function safeToSpend(entries, goals, budgets, today) {
   };
 }
 
+// Which 50/30/20 group each expense category belongs to
+const CATEGORY_GROUPS = {
+  Food: "needs",
+  Transport: "needs",
+  School: "needs",
+  Bills: "needs",
+  Fun: "wants",
+  Other: "wants",
+};
+
+// Compares a month with the 50/30/20 rule: 50% of income for needs,
+// 30% for wants, 20% for savings (money put into goals that month).
+function fiftyThirtyTwenty(entries, goals, month) {
+  const monthEntries = entriesInMonth(entries, month);
+  const incomeCents = monthTotals(monthEntries).inCents;
+  const spent = { needs: 0, wants: 0 };
+  for (const entry of monthEntries) {
+    if (entry.type === "expense") {
+      spent[CATEGORY_GROUPS[entry.category] || "wants"] += entry.amountCents;
+    }
+  }
+  let savedCents = 0;
+  for (const goal of goals) {
+    for (const contribution of goal.contributions) {
+      if (monthKey(contribution.date) === month) {
+        savedCents += contribution.amountCents;
+      }
+    }
+  }
+  const group = (key, label, percent, actualCents) => ({
+    key: key,
+    label: label,
+    percent: percent,
+    // Round down so the three targets never add up to more than the income
+    targetCents: Math.floor((incomeCents * percent) / 100),
+    actualCents: actualCents,
+  });
+  return {
+    incomeCents: incomeCents,
+    groups: [
+      group("needs", "Needs", 50, spent.needs),
+      group("wants", "Wants", 30, spent.wants),
+      group("savings", "Savings", 20, savedCents),
+    ],
+  };
+}
+
 // plural(1, "entry", "entries") -> "1 entry"; plural(3, ...) -> "3 entries"
 function plural(count, one, many) {
   return count + " " + (count === 1 ? one : many);
@@ -380,5 +427,7 @@ if (typeof module !== "undefined") {
     monthsBetween,
     goalMoneyThisMonth,
     safeToSpend,
+    CATEGORY_GROUPS,
+    fiftyThirtyTwenty,
   };
 }

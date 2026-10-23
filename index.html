@@ -57,6 +57,12 @@
       <p id="add-message" class="message" aria-live="polite"></p>
     </section>
 
+    <section id="rule-card" hidden>
+      <h2>50/30/20 this month</h2>
+      <p id="rule-empty" class="empty">Add this month's income to see your 50/30/20 split.</p>
+      <ul id="rule-list" class="rule-list"></ul>
+    </section>
+
     <section id="by-category">
       <h2>Where it went</h2>
       <p id="category-empty" class="empty">Your spending by category will show up here.</p>
@@ -113,6 +119,20 @@
 
     <section id="settings">
       <h2>Settings</h2>
+      <!-- A fieldset groups related radio buttons; legend is its title.
+           Radios with the same name: choosing one unchooses the others. -->
+      <fieldset class="style-choice">
+        <legend>Budget style</legend>
+        <label class="radio">
+          <input type="radio" name="budget-style" value="simple"> Simple: just track
+        </label>
+        <label class="radio">
+          <input type="radio" name="budget-style" value="503020"> 50/30/20
+        </label>
+        <p class="hint">The 50/30/20 rule splits your income into three parts: about 50%
+          for needs (food, transport, school, bills), 30% for wants (fun and other),
+          and 20% for savings. It's a starting point, not a strict law, so adjust it to fit your life.</p>
+      </fieldset>
       <form id="settings-form">
         <label>Hourly wage (after tax, if you know it)
           <input id="wage" type="text" inputmode="decimal" placeholder="e.g. 16.10" autocomplete="off">

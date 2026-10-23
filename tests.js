@@ -255,4 +255,31 @@ assert.strictEqual(logic.safeToSpend(safeEntries, [safeGoal], { Bills: 900000 },
 // February 2028 has 29 days (leap year)
 assert.strictEqual(logic.safeToSpend([], [], {}, "2028-02-01").daysLeft, 29);
 
+// fiftyThirtyTwenty: $1000 income; needs $420 (Food + Bills), wants $100,
+// savings $150 put into a goal in October
+const ruleEntries = [
+  { type: "income", category: "Job", amountCents: 100000, date: "2026-10-01" },
+  { type: "expense", category: "Food", amountCents: 30000, date: "2026-10-03" },
+  { type: "expense", category: "Bills", amountCents: 12000, date: "2026-10-04" },
+  { type: "expense", category: "Fun", amountCents: 10000, date: "2026-10-05" },
+  { type: "expense", category: "Fun", amountCents: 5000, date: "2026-09-05" }, // other month
+];
+const ruleGoals = [
+  { contributions: [{ date: "2026-10-10", amountCents: 15000 }, { date: "2026-09-10", amountCents: 9999 }] },
+];
+assert.deepStrictEqual(logic.fiftyThirtyTwenty(ruleEntries, ruleGoals, "2026-10"), {
+  incomeCents: 100000,
+  groups: [
+    { key: "needs", label: "Needs", percent: 50, targetCents: 50000, actualCents: 42000 },
+    { key: "wants", label: "Wants", percent: 30, targetCents: 30000, actualCents: 10000 },
+    { key: "savings", label: "Savings", percent: 20, targetCents: 20000, actualCents: 15000 },
+  ],
+});
+// No income: targets are 0, nothing crashes
+assert.strictEqual(logic.fiftyThirtyTwenty([], [], "2026-10").groups[0].targetCents, 0);
+// Every expense category belongs to a group
+for (const category of logic.EXPENSE_CATEGORIES) {
+  assert.ok(logic.CATEGORY_GROUPS[category], category + " has no 50/30/20 group");
+}
+
 console.log("All tests passed");

@@ -285,6 +285,43 @@ function renderGoals() {
   }
 }
 
+function renderRuleCard() {
+  const card = document.getElementById("rule-card");
+  card.hidden = data.settings.budgetStyle !== "503020";
+  if (card.hidden) {
+    return;
+  }
+  const result = fiftyThirtyTwenty(data.entries, data.goals, viewMonth);
+  const list = document.getElementById("rule-list");
+  list.innerHTML = "";
+  document.getElementById("rule-empty").hidden = result.incomeCents > 0;
+  if (result.incomeCents === 0) {
+    return;
+  }
+  for (const group of result.groups) {
+    const item = makeElement("li", "category-item", "");
+    const row = makeElement("div", "category-row", "");
+    row.appendChild(makeElement("span", "", group.label + " (" + group.percent + "%)"));
+    row.appendChild(makeElement("span", "category-amount", formatCents(group.actualCents)));
+    item.appendChild(row);
+    const percent = group.targetCents > 0 ? Math.min(100, Math.floor((group.actualCents / group.targetCents) * 100)) : 0;
+    // For savings, going past 20% is great, so only needs/wants get the "over" colour
+    const isOver = group.key !== "savings" && group.actualCents > group.targetCents;
+    const bar = makeElement("div", isOver ? "progress over" : "progress", "");
+    bar.setAttribute("role", "progressbar");
+    bar.setAttribute("aria-valuemin", "0");
+    bar.setAttribute("aria-valuemax", "100");
+    bar.setAttribute("aria-valuenow", String(percent));
+    bar.setAttribute("aria-label", group.label + " compared with target");
+    const fill = makeElement("div", "progress-fill", "");
+    fill.style.width = percent + "%";
+    bar.appendChild(fill);
+    item.appendChild(bar);
+    item.appendChild(makeElement("p", "budget-text", "Target: " + formatCents(group.targetCents)));
+    list.appendChild(item);
+  }
+}
+
 function renderComparison(entries) {
   const previousMonth = shiftMonth(viewMonth, -1);
   const previousEntries = entriesInMonth(data.entries, previousMonth);
@@ -322,6 +359,7 @@ function render() {
   renderMonthSwitcher();
   renderSafeToSpend();
   renderTotals(entries);
+  renderRuleCard();
   renderCategoryTotals(entries);
   renderComparison(entries);
   renderList(entries);
@@ -450,6 +488,18 @@ const settingsMessage = document.getElementById("settings-message");
 function fillSettingsForm() {
   const wage = data.settings.hourlyWageCents;
   wageInput.value = wage ? (wage / 100).toFixed(2) : "";
+  for (const radio of document.querySelectorAll('input[name="budget-style"]')) {
+    radio.checked = radio.value === data.settings.budgetStyle;
+  }
+}
+
+// The style is saved as soon as it's chosen, no Save button needed
+for (const radio of document.querySelectorAll('input[name="budget-style"]')) {
+  radio.addEventListener("change", () => {
+    data.settings.budgetStyle = radio.value;
+    saveData(data);
+    render();
+  });
 }
 
 document.getElementById("settings-form").addEventListener("submit", (event) => {

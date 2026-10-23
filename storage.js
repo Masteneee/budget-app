@@ -14,6 +14,8 @@ function emptyData() {
     settings: {
       // null means "not set": the hours-of-work feature stays hidden
       hourlyWageCents: null,
+      // "simple" (just track) or "503020" (needs, wants, savings)
+      budgetStyle: "simple",
     },
   };
 }

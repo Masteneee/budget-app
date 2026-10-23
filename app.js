@@ -74,11 +74,25 @@ function renderTotals(entries) {
   document.getElementById("total-left").textContent = formatCents(totals.leftCents);
 }
 
+function renderCategoryTotals(entries) {
+  const list = document.getElementById("category-list");
+  const totals = totalsByCategory(entries);
+  list.innerHTML = "";
+  document.getElementById("category-empty").hidden = totals.length > 0;
+  for (const total of totals) {
+    const row = makeElement("li", "category-row", "");
+    row.appendChild(makeElement("span", "", total.category));
+    row.appendChild(makeElement("span", "category-amount", formatCents(total.cents)));
+    list.appendChild(row);
+  }
+}
+
 // Redraws everything that depends on the data. Called after any change.
 function render() {
   const thisMonth = monthKey(toDateString(new Date()));
   const entries = entriesInMonth(data.entries, thisMonth);
   renderTotals(entries);
+  renderCategoryTotals(entries);
   renderList(entries);
 }
 

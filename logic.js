@@ -100,6 +100,22 @@ function monthTotals(entries) {
   return { inCents: inCents, outCents: outCents, leftCents: inCents - outCents };
 }
 
+// Spending per category, biggest first: [{ category: "Food", cents: 4200 }, ...]
+// Income is skipped because this answers "where did my money go?"
+function totalsByCategory(entries) {
+  // An object used as a lookup table: { Food: 4200, Fun: 1500 }
+  const totals = {};
+  for (const entry of entries) {
+    if (entry.type === "income") {
+      continue;
+    }
+    totals[entry.category] = (totals[entry.category] || 0) + entry.amountCents;
+  }
+  const list = Object.keys(totals).map((category) => ({ category: category, cents: totals[category] }));
+  // Biggest first; equal amounts go alphabetically so the order never jumps around
+  return list.sort((a, b) => b.cents - a.cents || a.category.localeCompare(b.category));
+}
+
 // In the browser, functions above are already global. Node has no
 // globals between files, so tests.js needs them handed over here.
 // `module` only exists in Node, which is why we check first.
@@ -118,5 +134,6 @@ if (typeof module !== "undefined") {
     updateEntry,
     removeEntry,
     monthTotals,
+    totalsByCategory,
   };
 }

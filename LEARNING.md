@@ -26,6 +26,8 @@
   examples (job pay, gifts) plus a catch-all.
 - **A negative "Left this month" stays in the calm green colour (task 1.4).** It
   shows "-$7.50" plainly, with no red, per the "no guilt" rule.
+- **"Where it went" counts expenses only and hides categories with $0 (task 1.5).**
+  Ties are sorted alphabetically so rows don't swap places randomly.
 
 ---
 
@@ -505,5 +507,73 @@ keeping three numbers in sync forever.
    (task 2.2) can pass in any month's entries.
 2. Money in $20.00, Money out $30.00, Left this month -$10.00 (shown in the
    same calm green, not red).
+
+</details>
+
+---
+
+## Task 1.5: Totals per category (2026-10-23)
+
+### What we built
+
+A new card called "Where it went" sits between the add form and the list. It
+shows how much you spent in each category this month, with the biggest category
+on top: for example "Food $42.00", then "Fun $15.00". Only categories you actually
+spent in appear, and income isn't counted (it's money coming in, not going
+somewhere). Before your first expense, the card says your spending will show up
+there. It updates instantly after every add, edit or delete.
+
+### New concepts
+
+**An object as a lookup table.** `const totals = {}` starts empty. Then
+`totals["Food"]` reads the Food total and `totals["Food"] = 4200` sets it. It's
+like a dictionary: you look up a word (the "key") to get its value. This is
+called grouping, and it's one of the most common patterns in programming.
+
+**`|| 0` for a default.** The first time we see "Food", `totals["Food"]` is
+`undefined`. `undefined || 0` gives `0`, so we add to 0 instead of getting
+`NaN` (Not a Number) from `undefined + 1000`.
+
+**`continue`.** Inside a loop, `continue` skips the rest of this turn and jumps
+to the next item. Here it skips income entries.
+
+**`Object.keys`.** Gives an array of an object's keys: `["Fun", "Food", "Bills"]`.
+We map over them to turn the lookup table back into a list we can sort.
+
+**Sorting numbers.** `(a, b) => b.cents - a.cents` gives a negative number when
+`a` is bigger, so bigger amounts go first. If the amounts are equal, the
+subtraction gives `0`, and `0 || ...` moves on to the alphabetical comparison.
+
+**Returning an object from an arrow function.** `(category) => ({ category: ... })`
+needs the round brackets around the `{ }`. Without them, JavaScript reads `{` as
+the start of a code block, not an object.
+
+### Key lines of code
+
+```js
+totals[entry.category] = (totals[entry.category] || 0) + entry.amountCents;
+```
+"Take the current total for this category (or 0 if there isn't one yet), add this
+expense, and store it back."
+
+```js
+return list.sort((a, b) => b.cents - a.cents || a.category.localeCompare(b.category));
+```
+Two sort rules in one line: by amount, and if tied, by name.
+
+### Quiz
+
+1. What would `totalsByCategory` return if you removed `|| 0`?
+2. Food and Fun both total $15.00. Which one is listed first, and why?
+
+**Answers**
+
+<details>
+<summary>Show answers</summary>
+
+1. Every total would be `NaN`. The first addition would be
+   `undefined + amount`, which is `NaN`, and anything plus `NaN` stays `NaN`.
+2. Food. The amounts tie, so `b.cents - a.cents` is 0 and the tie-breaker
+   sorts alphabetically, and "Food" comes before "Fun" ("o" < "u").
 
 </details>

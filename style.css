@@ -255,3 +255,19 @@ button.quiet {
 .entry.income .entry-amount {
   color: var(--accent);
 }
+
+.category-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.category-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+}
+
+.category-amount {
+  font-weight: 600;
+}

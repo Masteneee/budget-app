@@ -77,4 +77,21 @@ assert.deepStrictEqual(
 // Spending more than you earned gives a negative "left"
 assert.strictEqual(logic.monthTotals([{ type: "expense", amountCents: 300 }]).leftCents, -300);
 
+// totalsByCategory
+assert.deepStrictEqual(logic.totalsByCategory([]), []);
+assert.deepStrictEqual(
+  logic.totalsByCategory([
+    { type: "expense", category: "Fun", amountCents: 1500 },
+    { type: "expense", category: "Food", amountCents: 1000 },
+    { type: "income", category: "Job", amountCents: 99999 },
+    { type: "expense", category: "Food", amountCents: 3200 },
+    { type: "expense", category: "Bills", amountCents: 1500 },
+  ]),
+  [
+    { category: "Food", cents: 4200 },
+    { category: "Bills", cents: 1500 },
+    { category: "Fun", cents: 1500 },
+  ]
+);
+
 console.log("All tests passed");

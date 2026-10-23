@@ -27,7 +27,7 @@ Goal: adding an expense takes under 5 seconds.
   step before deleting.
 - [x] **1.4 Income.** Add income entries (job pay, gifts). Show "Money in", "Money out"
   and "Left this month" at the top. Test the totals in tests.js.
-- [ ] **1.5 Totals per category.** A simple list of how much went to each category
+- [x] **1.5 Totals per category.** A simple list of how much went to each category
   this month, biggest first. Logic in logic.js with tests.
 - [ ] **1.6 Phone-friendly layout.** Make the page comfortable on a phone screen
   (big tap targets, one column). Explain the CSS used in LEARNING.md.

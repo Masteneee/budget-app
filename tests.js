@@ -174,4 +174,24 @@ assert.strictEqual(logic.goalPercent({ targetCents: 100, contributions: [] }), 0
 assert.strictEqual(logic.goalPercent({ targetCents: 100, contributions: [{ amountCents: 99 }] }), 99);
 assert.strictEqual(logic.goalPercent({ targetCents: 100, contributions: [{ amountCents: 250 }] }), 100);
 
+// budgetRows
+const budgetEntries = [
+  { type: "expense", category: "Food", amountCents: 4200 },
+  { type: "expense", category: "Fun", amountCents: 6000 },
+  { type: "expense", category: "Other", amountCents: 300 },
+];
+assert.deepStrictEqual(logic.budgetRows(budgetEntries, { Food: 10000, Fun: 5000, Bills: 8000 }), [
+  { category: "Fun", spentCents: 6000, budgetCents: 5000, percent: 100, isOver: true },
+  { category: "Food", spentCents: 4200, budgetCents: 10000, percent: 42, isOver: false },
+  { category: "Other", spentCents: 300, budgetCents: null, percent: null, isOver: false },
+  { category: "Bills", spentCents: 0, budgetCents: 8000, percent: 0, isOver: false },
+]);
+assert.deepStrictEqual(logic.budgetRows([], {}), []);
+
+// describeBudget
+assert.strictEqual(logic.describeBudget({ spentCents: 4200, budgetCents: 10000 }), "$58.00 left of $100.00");
+assert.strictEqual(logic.describeBudget({ spentCents: 10000, budgetCents: 10000 }), "Right on your $100.00 plan");
+assert.strictEqual(logic.describeBudget({ spentCents: 11200, budgetCents: 10000 }), "$12.00 above your $100.00 plan");
+assert.strictEqual(logic.describeBudget({ spentCents: 300, budgetCents: null }), "");
+
 console.log("All tests passed");

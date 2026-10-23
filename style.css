@@ -443,3 +443,29 @@ details summary {
 .goal .message {
   margin: 4px 0 0;
 }
+
+.category-item {
+  padding: 4px 0 8px;
+}
+
+.budget-text {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+/* Over the plan: a calm slate colour instead of an alarming red */
+.progress.over .progress-fill {
+  background: #6f7f99;
+}
+
+.budget-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 12px;
+}
+
+.budget-label {
+  display: block;
+  color: var(--muted);
+}

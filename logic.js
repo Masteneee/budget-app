@@ -197,6 +197,42 @@ function formatHours(hours) {
   return String(rounded) + " h";
 }
 
+// One row per category that has spending or a budget this month.
+// budgets looks like { Food: 10000, Fun: 5000 } (cents per month).
+function budgetRows(entries, budgets) {
+  const rows = totalsByCategory(entries).map((total) => ({
+    category: total.category,
+    spentCents: total.cents,
+    budgetCents: budgets[total.category] || null,
+  }));
+  // Budgeted categories with no spending yet still deserve a row
+  for (const category of EXPENSE_CATEGORIES) {
+    if (budgets[category] && !rows.some((row) => row.category === category)) {
+      rows.push({ category: category, spentCents: 0, budgetCents: budgets[category] });
+    }
+  }
+  for (const row of rows) {
+    row.percent = row.budgetCents ? Math.min(100, Math.floor((row.spentCents / row.budgetCents) * 100)) : null;
+    row.isOver = row.budgetCents !== null && row.spentCents > row.budgetCents;
+  }
+  return rows;
+}
+
+// Calm, factual wording. Going over is information, not a failure.
+function describeBudget(row) {
+  if (!row.budgetCents) {
+    return "";
+  }
+  const difference = row.budgetCents - row.spentCents;
+  if (difference > 0) {
+    return formatCents(difference) + " left of " + formatCents(row.budgetCents);
+  }
+  if (difference === 0) {
+    return "Right on your " + formatCents(row.budgetCents) + " plan";
+  }
+  return formatCents(-difference) + " above your " + formatCents(row.budgetCents) + " plan";
+}
+
 // A goal keeps every contribution with its date (not just a total),
 // so we can later ask "how much went to goals this month?"
 function goalSavedCents(goal) {
@@ -272,5 +308,7 @@ if (typeof module !== "undefined") {
     formatLongDate,
     goalSavedCents,
     goalPercent,
+    budgetRows,
+    describeBudget,
   };
 }

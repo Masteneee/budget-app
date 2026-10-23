@@ -60,6 +60,10 @@
   to keep this task small.
 - **A goal shows "Goal reached!" at 100% and accepts more money after (task 3.1).**
   The bar stops at 100%, and the amount shows the real total ("$450.00 of $400.00").
+- **Budgets live in their own "Monthly budgets" card, and progress shows inside
+  "Where it went" (task 3.2).** Over-plan bars turn a calm slate blue, and the
+  text says "$10.00 above your $50.00 plan". Budgeted categories show up even
+  before you spend in them. The same budgets apply to every month.
 
 ---
 
@@ -1133,5 +1137,79 @@ An empty date field gives `""`; `|| null` stores it as a clear "no date".
    the goal is reached when it's 1 cent short.
 2. Task 3.3 needs to know how much went into goals *this month*. A single total
    can't tell you when the money was added; a dated list can.
+
+</details>
+
+---
+
+## Task 3.2: Monthly budget per category (2026-10-23)
+
+### What we built
+
+A new "Monthly budgets" card has one box per expense category. Type a monthly
+plan (like 100 for Food) and save. Empty boxes mean "no plan". In "Where it
+went", each category with a plan now has a progress bar and a line like "$58.00
+left of $100.00". Categories you planned for but haven't spent in yet also show
+up, with an empty bar. If you go past a plan, the bar fills in a calm slate blue
+and says "$10.00 above your $50.00 plan". No red, no "warning". Categories
+without a plan look the same as before.
+
+### New concepts
+
+**`data-*` attributes and `dataset`.** `input.dataset.category = "Food"` adds
+`data-category="Food"` to the HTML element. Later, `input.dataset.category`
+reads it back. It's the standard way to attach your own information to an
+element, here to know which category each box belongs to.
+
+**`querySelectorAll`.** `document.querySelectorAll("#budget-inputs input")` finds
+every element matching a CSS selector (here, all inputs inside the budgets box).
+It's like `getElementById`, but for many elements and any selector.
+
+**Building a new object, then swapping it in.** The save handler builds
+`newBudgets` from scratch and only assigns it to `data.budgets` if every box is
+valid. If one box is wrong, we `return` early and the old budgets stay untouched.
+No half-saved state.
+
+**Adding computed fields.** `budgetRows` builds rows and then adds `percent` and
+`isOver` to each. Computing these in logic.js means app.js doesn't do any math;
+it only decides how things look.
+
+**Design choice: colour carries meaning.** Red means danger in most cultures. A
+budget going over isn't danger; it's information. So "over" gets a different but
+calm colour, and the text gives the fact. Choosing colours is a design decision
+with real effects on how people feel about using the app.
+
+### Key lines of code
+
+```js
+budgetCents: budgets[total.category] || null,
+```
+Looks up this category's plan. No entry (`undefined`) becomes a clear `null`.
+
+```js
+if (budgets[category] && !rows.some((row) => row.category === category)) {
+```
+"This category has a plan, and no row exists yet": add an empty one so the plan is visible.
+
+```js
+const bar = makeElement("div", budgetRow.isOver ? "progress over" : "progress", "");
+```
+An element can have several classes separated by spaces. CSS rule
+`.progress.over .progress-fill` only applies when both classes are present.
+
+### Quiz
+
+1. You set Food to 100 and Fun to "abc", then tap Save. What happens to the Food budget?
+2. Why is the Fun bar's `percent` 100 and not 120 when you spent $60 of $50?
+
+**Answers**
+
+<details>
+<summary>Show answers</summary>
+
+1. Nothing is saved, not even Food. The handler stops at the first invalid box
+   (`return`) before replacing `data.budgets`, and the message points to Fun.
+2. `Math.min(100, ...)` caps it, because a bar can't be fuller than full. The text
+   below still gives the real amount ("$10.00 above your $50.00 plan").
 
 </details>

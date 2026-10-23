@@ -9,6 +9,8 @@ function emptyData() {
   return {
     entries: [],
     goals: [],
+    // Monthly limit per category in cents, e.g. { Food: 20000 }
+    budgets: {},
     settings: {
       // null means "not set": the hours-of-work feature stays hidden
       hourlyWageCents: null,

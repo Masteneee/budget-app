@@ -135,20 +135,36 @@ function renderChart(totals) {
 
 function renderCategoryTotals(entries) {
   const list = document.getElementById("category-list");
-  const totals = totalsByCategory(entries);
-  renderChart(totals);
+  renderChart(totalsByCategory(entries));
+  const rows = budgetRows(entries, data.budgets);
   list.innerHTML = "";
-  document.getElementById("category-empty").hidden = totals.length > 0;
-  for (const total of totals) {
-    const row = makeElement("li", "category-row", "");
-    const name = makeElement("span", "category-name", total.category);
+  document.getElementById("category-empty").hidden = rows.length > 0;
+  for (const budgetRow of rows) {
+    const item = makeElement("li", "category-item", "");
+    const row = makeElement("div", "category-row", "");
+    const name = makeElement("span", "category-name", budgetRow.category);
     // The coloured dot links each row to its slice of the chart
     const dot = makeElement("span", "category-dot", "");
-    dot.style.background = CATEGORY_COLORS[total.category];
+    dot.style.background = CATEGORY_COLORS[budgetRow.category];
     name.prepend(dot);
     row.appendChild(name);
-    row.appendChild(makeElement("span", "category-amount", formatCents(total.cents)));
-    list.appendChild(row);
+    row.appendChild(makeElement("span", "category-amount", formatCents(budgetRow.spentCents)));
+    item.appendChild(row);
+
+    if (budgetRow.budgetCents) {
+      const bar = makeElement("div", budgetRow.isOver ? "progress over" : "progress", "");
+      bar.setAttribute("role", "progressbar");
+      bar.setAttribute("aria-valuemin", "0");
+      bar.setAttribute("aria-valuemax", "100");
+      bar.setAttribute("aria-valuenow", String(budgetRow.percent));
+      bar.setAttribute("aria-label", budgetRow.category + " budget used");
+      const fill = makeElement("div", "progress-fill", "");
+      fill.style.width = budgetRow.percent + "%";
+      bar.appendChild(fill);
+      item.appendChild(bar);
+      item.appendChild(makeElement("p", "budget-text", describeBudget(budgetRow)));
+    }
+    list.appendChild(item);
   }
 }
 
@@ -460,6 +476,48 @@ document.getElementById("goal-form").addEventListener("submit", (event) => {
   render();
 });
 
+// One input per expense category, filled with the saved budget
+function renderBudgetInputs() {
+  const container = document.getElementById("budget-inputs");
+  container.innerHTML = "";
+  for (const category of EXPENSE_CATEGORIES) {
+    const label = makeElement("label", "budget-label", category);
+    const input = document.createElement("input");
+    input.type = "text";
+    input.inputMode = "decimal";
+    input.autocomplete = "off";
+    input.placeholder = "No plan";
+    input.dataset.category = category;
+    const budget = data.budgets[category];
+    input.value = budget ? (budget / 100).toFixed(2) : "";
+    label.appendChild(input);
+    container.appendChild(label);
+  }
+}
+
+document.getElementById("budget-form").addEventListener("submit", (event) => {
+  event.preventDefault();
+  const message = document.getElementById("budget-message");
+  const newBudgets = {};
+  for (const input of document.querySelectorAll("#budget-inputs input")) {
+    const text = input.value.trim();
+    if (text === "") {
+      continue;
+    }
+    const cents = parseAmountToCents(text);
+    if (cents === null) {
+      message.textContent = "Check the " + input.dataset.category + " box: type a number like 150";
+      input.focus();
+      return;
+    }
+    newBudgets[input.dataset.category] = cents;
+  }
+  data.budgets = newBudgets;
+  saveData(data);
+  message.textContent = "Budgets saved";
+  render();
+});
+
 const backupMessage = document.getElementById("backup-message");
 const importFile = document.getElementById("import-file");
 const importConfirm = document.getElementById("import-confirm");
@@ -515,6 +573,7 @@ document.getElementById("import-yes").addEventListener("click", () => {
   importConfirm.hidden = true;
   viewMonth = monthKey(toDateString(new Date()));
   fillSettingsForm();
+  renderBudgetInputs();
   render();
   backupMessage.textContent = "Backup loaded";
 });
@@ -538,6 +597,7 @@ typeExpenseButton.addEventListener("click", () => setAddType("expense"));
 typeIncomeButton.addEventListener("click", () => setAddType("income"));
 
 renderCategoryButtons();
+renderBudgetInputs();
 fillSettingsForm();
 dateInput.value = toDateString(new Date());
 render();

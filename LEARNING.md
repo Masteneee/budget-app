@@ -44,6 +44,11 @@
 - **"Compared with last month" lists every category from either month (task 2.2).**
   A category you skipped this month shows as "$30.00 less", and one that's new
   shows as "more". The wording is plain facts with no judgement.
+- **Hours of work: rounded to 1 decimal, shown only on expenses, and "< 0.1 h"
+  for tiny amounts (task 2.3).** The wage label suggests "after tax" because
+  that's what you actually take home, but any number works.
+- **Settings live in a "Settings" card at the bottom of the page (task 2.3).**
+  An empty wage turns the feature off.
 
 ---
 
@@ -853,5 +858,84 @@ The sign of the change decides the word, and the amount is always shown positive
    Month = 24311 % 12 + 1 = 11 + 1 = 12. Result: "2025-12".
 2. It jumps to October 2026, where the new entry is. Otherwise the expense would
    be saved but invisible, and you might think it didn't work and add it twice.
+
+</details>
+
+---
+
+## Task 2.3: Hours of work (2026-10-23)
+
+### What we built
+
+A Settings card at the bottom of the page has one field: your hourly wage. Once
+you save it, every expense in the list shows a small grey line like "1.5 h of
+work" under its amount. A $24 dinner at $16/hour is 1.5 hours of making pizza.
+Income rows don't get it (it wouldn't mean anything there). Typing something
+that isn't a number shows a calm message. Clearing the field and saving turns
+the feature off. The wage is saved with the rest of your data, so it survives reloads.
+
+### New concepts
+
+**Units cancel out.** `amountCents / hourlyWageCents` is (cents) ÷ (cents per
+hour) = hours. Since both are in cents, no conversion is needed. Same idea as
+in physics: track the units and the formula checks itself.
+
+**`null` as "nothing on purpose".** `hourlyWageCents: null` means "the user
+hasn't set this". `hoursOfWork` returns `null` too when there's no wage, and the
+page shows nothing. `null` is different from `0`: a wage of 0 would mean
+dividing by zero (`Infinity`), so `!hourlyWageCents` rejects both.
+
+**Truthy and falsy.** In a condition, `0`, `""`, `null`, `undefined` and `NaN`
+count as false ("falsy"); almost everything else counts as true. `if (!wage)`
+is a short way to say "if wage is missing or zero".
+
+**Rounding to one decimal.** `Math.round` only rounds to whole numbers. So we
+multiply by 10, round, and divide by 10: 1.96 → 19.6 → 20 → 2.
+
+**Migrating saved data.** Users who saved data before this task have no
+`settings` field. `Object.assign(emptyData().settings, data.settings)` fills in
+the defaults for anything missing. Without it, `data.settings.hourlyWageCents`
+would crash with "Cannot read properties of undefined". Any app that stores data
+long-term has to handle old formats like this.
+
+**Shallow copy.** `Object.assign` only copies the top level. If the saved data
+has a `settings` object, it replaces the whole default `settings` object (it
+doesn't merge inside it). That's why we merge `settings` on its own line.
+
+### Key lines of code
+
+```js
+const rounded = Math.round(hours * 10) / 10;
+if (rounded === 0) {
+  return "< 0.1 h";
+}
+```
+A 30-cent expense would round to "0 h", which reads as "free". "< 0.1 h" is more honest.
+
+```js
+data.settings = Object.assign(emptyData().settings, data.settings);
+```
+Defaults first, then whatever was saved on top.
+
+```js
+const hours = entry.type === "expense" ? hoursOfWork(entry.amountCents, data.settings.hourlyWageCents) : null;
+```
+Only expenses get hours, and only when a wage is set (otherwise `hoursOfWork`
+returns `null`).
+
+### Quiz
+
+1. Your wage is $16.10 and you spend $4.50 on a coffee. What does the row show?
+2. Why did we need to change `loadData` in storage.js for this feature?
+
+**Answers**
+
+<details>
+<summary>Show answers</summary>
+
+1. 450 / 1610 = 0.2795..., × 10 = 2.795, rounded to 3, / 10 = 0.3. So "0.3 h of work".
+2. Data saved before this task has no `settings` field. Without the merge,
+   reading `data.settings.hourlyWageCents` would crash for every existing user.
+   With it, they get the default (`null`, feature off).
 
 </details>

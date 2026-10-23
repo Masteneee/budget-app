@@ -8,6 +8,10 @@ const STORAGE_KEY = "budgetApp";
 function emptyData() {
   return {
     entries: [],
+    settings: {
+      // null means "not set": the hours-of-work feature stays hidden
+      hourlyWageCents: null,
+    },
   };
 }
 
@@ -20,8 +24,11 @@ function loadData() {
     // Broken or blocked storage: start fresh instead of crashing the page
     console.warn("Could not read saved data", error);
   }
-  // Fields missing from older saves get their default value
-  return Object.assign(emptyData(), saved);
+  // Fields missing from older saves get their default value.
+  // Settings is merged on its own so a new setting gets its default too.
+  const data = Object.assign(emptyData(), saved);
+  data.settings = Object.assign(emptyData().settings, data.settings);
+  return data;
 }
 
 function saveData(data) {

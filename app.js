@@ -219,6 +219,10 @@ function renderList(monthEntries) {
     // Income gets a "+" so the two kinds are easy to tell apart at a glance
     const sign = entry.type === "income" ? "+" : "";
     right.appendChild(makeElement("span", "entry-amount", sign + formatCents(entry.amountCents)));
+    const hours = entry.type === "expense" ? hoursOfWork(entry.amountCents, data.settings.hourlyWageCents) : null;
+    if (hours !== null) {
+      right.appendChild(makeElement("span", "entry-hours", formatHours(hours) + " of work"));
+    }
     right.appendChild(makeElement("span", "entry-date", formatShortDate(entry.date)));
     row.appendChild(right);
     item.appendChild(row);
@@ -305,6 +309,33 @@ function setAddType(type) {
   amountInput.focus();
 }
 
+const wageInput = document.getElementById("wage");
+const settingsMessage = document.getElementById("settings-message");
+
+function fillSettingsForm() {
+  const wage = data.settings.hourlyWageCents;
+  wageInput.value = wage ? (wage / 100).toFixed(2) : "";
+}
+
+document.getElementById("settings-form").addEventListener("submit", (event) => {
+  event.preventDefault();
+  const text = wageInput.value.trim();
+  if (text === "") {
+    data.settings.hourlyWageCents = null;
+    settingsMessage.textContent = "Hours of work turned off";
+  } else {
+    const wageCents = parseAmountToCents(text);
+    if (wageCents === null) {
+      settingsMessage.textContent = "Type your wage as a number, like 16.10";
+      return;
+    }
+    data.settings.hourlyWageCents = wageCents;
+    settingsMessage.textContent = "Saved: " + formatCents(wageCents) + " per hour";
+  }
+  saveData(data);
+  render();
+});
+
 document.getElementById("month-prev").addEventListener("click", () => {
   viewMonth = shiftMonth(viewMonth, -1);
   render();
@@ -318,6 +349,7 @@ typeExpenseButton.addEventListener("click", () => setAddType("expense"));
 typeIncomeButton.addEventListener("click", () => setAddType("income"));
 
 renderCategoryButtons();
+fillSettingsForm();
 dateInput.value = toDateString(new Date());
 render();
 amountInput.focus();

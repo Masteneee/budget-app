@@ -172,6 +172,26 @@ function describeChange(row) {
   return row.category + ": " + formatCents(Math.abs(row.changeCents)) + " " + direction + " than last month";
 }
 
+// How many hours of work an expense cost, e.g. $24 at $16/h = 1.5.
+// Returns null when no wage is set, so the caller can show nothing.
+function hoursOfWork(amountCents, hourlyWageCents) {
+  if (!hourlyWageCents) {
+    return null;
+  }
+  // Both are in cents, so the cents cancel out and we get hours
+  return amountCents / hourlyWageCents;
+}
+
+// 1.5 -> "1.5 h", 2 -> "2 h", 0.03 -> "< 0.1 h"
+function formatHours(hours) {
+  const rounded = Math.round(hours * 10) / 10;
+  if (rounded === 0) {
+    return "< 0.1 h";
+  }
+  // String(2) is "2" and String(1.5) is "1.5", so no ".0" to remove
+  return String(rounded) + " h";
+}
+
 // In the browser, functions above are already global. Node has no
 // globals between files, so tests.js needs them handed over here.
 // `module` only exists in Node, which is why we check first.
@@ -195,5 +215,7 @@ if (typeof module !== "undefined") {
     shiftMonth,
     compareMonths,
     describeChange,
+    hoursOfWork,
+    formatHours,
   };
 }

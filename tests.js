@@ -125,4 +125,15 @@ assert.strictEqual(logic.describeChange({ category: "Food", changeCents: -4000 }
 assert.strictEqual(logic.describeChange({ category: "Fun", changeCents: 550 }), "Fun: $5.50 more than last month");
 assert.strictEqual(logic.describeChange({ category: "Fun", changeCents: 0 }), "Fun: same as last month");
 
+// hoursOfWork and formatHours
+assert.strictEqual(logic.hoursOfWork(2400, 1600), 1.5);
+assert.strictEqual(logic.hoursOfWork(2400, null), null);
+assert.strictEqual(logic.hoursOfWork(2400, 0), null);
+assert.strictEqual(logic.formatHours(1.5), "1.5 h");
+assert.strictEqual(logic.formatHours(2), "2 h");
+assert.strictEqual(logic.formatHours(0.125), "0.1 h");
+assert.strictEqual(logic.formatHours(0.03), "< 0.1 h");
+assert.strictEqual(logic.formatHours(1.96), "2 h");
+assert.strictEqual(logic.formatHours(logic.hoursOfWork(1250, 1610)), "0.8 h");
+
 console.log("All tests passed");

@@ -177,6 +177,7 @@ select:focus-visible {
 }
 
 .entry-note,
+.entry-hours,
 .entry-date {
   color: var(--muted);
   font-size: 0.9rem;
@@ -361,4 +362,9 @@ button:disabled {
 
 .compare-list li {
   padding: 4px 0;
+}
+
+#settings label {
+  display: block;
+  color: var(--muted);
 }
